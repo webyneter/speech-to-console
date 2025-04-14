@@ -1,10 +1,12 @@
 [build-system]
-requires = ["hatchling"]
+requires = [
+    "hatchling",
+]
 build-backend = "hatchling.build"
 
 [project]
 name = "speech-to-console"
-version = "0.2.2"
+version = "0.3.0"
 description = "Convert spoken commands to console operations"
 requires-python = "==3.10.*"
 authors = [
@@ -23,6 +25,10 @@ dependencies = [
     "structlog",
 ]
 
+[project.scripts]
+speech-to-console = "speech_to_console.cli:app"
+release = "scripts.release:main"
+
 [dependency-groups]
 dev = [
     "pytest",
@@ -34,18 +40,26 @@ dev = [
     "pre-commit",
 ]
 
-[project.scripts]
-speech-to-console = "speech_to_console.cli:app"
-release = "scripts.release:main"
-
 [tool.ruff]
 line-length = 88
 target-version = "py310"
-src = ["speech_to_console", "scripts", "tests"]
+src = [
+    "speech_to_console",
+    "scripts",
+    "tests",
+]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B", "W"]
-fixable = ["ALL"]
+select = [
+    "E",
+    "F",
+    "I",
+    "B",
+    "W",
+]
+fixable = [
+    "ALL",
+]
 unfixable = []
 
 [tool.ruff.format]
@@ -54,7 +68,9 @@ indent-style = "space"
 line-ending = "auto"
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = [
+    "tests",
+]
 python_files = "test_*.py"
 python_functions = "test_*"
 asyncio_mode = "strict"

@@ -7,6 +7,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-04-14
+
+### Added
+- Add build and test badge to README
+- Add pre-commit hooks for auto-formatting and linting
+- Add uv.lock file update to release process
+- Add automated release workflow with GitHub Actions
+
+### Fixed
+- Fix CI test issues by mocking GUI dependencies
+- Fix CI build issues
+
+### Changed
+- Update release workflow to publish to PyPI
+- Update setup-headless-display-action to v3 in CI configuration
+- Update release script to also update __init__.py version
+- Update author information in pyproject.toml
+- Streamline release process with a single script
+- Update README.md to clarify tool usage and requirements
+- Update README.md to include 'uv' package requirement
+
+### Dependencies
+- Bump speech-to-console version to 0.2.2
+
+
+## [0.3.0] - 2025-04-14
+
+### Added
+- Add build and test badge to README
+- Add pre-commit hooks for auto-formatting and linting
+- Add uv.lock file update to release process
+- Add automated release workflow with GitHub Actions
+
+### Fixed
+- Fix CI test issues by mocking GUI dependencies
+- Fix CI build issues
+
+### Changed
+- Update release workflow to publish to PyPI
+- Update setup-headless-display-action to v3 in CI configuration
+- Update release script to also update __init__.py version
+- Update author information in pyproject.toml
+- Streamline release process with a single script
+- Update README.md to clarify tool usage and requirements
+- Update README.md to include 'uv' package requirement
+
+### Dependencies
+- Bump speech-to-console version to 0.2.2
+
+
+## [0.2.3] - 2025-04-14
+
+### Added
+- Add build and test badge to README
+- Add pre-commit hooks for auto-formatting and linting
+- Add uv.lock file update to release process
+- Add automated release workflow with GitHub Actions
+
+### Fixed
+- Fix CI test issues by mocking GUI dependencies
+- Fix CI build issues
+
+### Changed
+- Update release workflow to publish to PyPI
+- Update setup-headless-display-action to v3 in CI configuration
+- Update release script to also update __init__.py version
+- Update author information in pyproject.toml
+- Streamline release process with a single script
+- Update README.md to clarify tool usage and requirements
+- Update README.md to include 'uv' package requirement
+
+### Dependencies
+- Bump speech-to-console version to 0.2.2
+
+
 ### Added
 - Automated GitHub releases via GitHub Actions on tag pushes
 - Automatic changelog updates on releases
@@ -53,7 +128,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adjusted audio sensitivity settings for different environments
 - Updated activation phrase to be more distinctive and reliable
 
-[Unreleased]: https://github.com/webyneter/speech-to-console/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/webyneter/speech-to-console/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/webyneter/speech-to-console/compare/v0.2.2...v0.3.0
+[0.2.3]: https://github.com/webyneter/speech-to-console/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/webyneter/speech-to-console/compare/v0.2.0...v0.2.2
 [0.2.0]: https://github.com/webyneter/speech-to-console/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/webyneter/speech-to-console/releases/tag/v0.1.0

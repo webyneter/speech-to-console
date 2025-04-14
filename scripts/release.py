@@ -249,14 +249,26 @@ def update_lockfile(repo_root):
 
 def git_commands(new_version, files_to_commit):
     """Run git commands to commit changes and create a tag"""
-    commands = [
-        ["git", "add"] + files_to_commit,
-        ["git", "commit", "-m", f"Release v{new_version}"],
-        ["git", "tag", "-a", f"v{new_version}", "-m", f"Release v{new_version}"],
-    ]
+    # First add all the files
+    add_cmd = ["git", "add"] + files_to_commit
+    subprocess.run(add_cmd, check=True)
 
-    for cmd in commands:
-        subprocess.run(cmd, check=True)
+    # Try to commit
+    try:
+        commit_cmd = ["git", "commit", "-m", f"Release v{new_version}"]
+        subprocess.run(commit_cmd, check=True)
+    except subprocess.CalledProcessError:
+        # Pre-commit hooks might have modified files
+        print("Commit failed. Pre-commit hooks modified files. Trying again...")
+        add_cmd = ["git", "add", "."]  # Add all changes
+        subprocess.run(add_cmd, check=True)
+
+        commit_cmd = ["git", "commit", "-m", f"Release v{new_version}"]
+        subprocess.run(commit_cmd, check=True)
+
+    # Create the tag
+    tag_cmd = ["git", "tag", "-a", f"v{new_version}", "-m", f"Release v{new_version}"]
+    subprocess.run(tag_cmd, check=True)
 
     print(f"Changes committed and tag v{new_version} created")
     print("\nTo push changes and trigger a release, run:")
