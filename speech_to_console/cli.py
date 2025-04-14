@@ -103,12 +103,27 @@ async def process_audio(
             await asyncio.sleep(1)
 
 
+def version_callback(value: bool) -> None:
+    """Show the version and exit."""
+    if value:
+        from speech_to_console import __version__
+
+        print(f"speech-to-console version: {__version__}")
+        raise typer.Exit()
+
+
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show verbose output"),
+    version: bool = typer.Option(
+        False, "--version", help="Show the version and exit."
+    ),
 ) -> None:
     """Convert spoken commands to console operations."""
+    if version:
+        version_callback(version)
+    
     if ctx.invoked_subcommand is not None:
         return
 

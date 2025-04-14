@@ -28,18 +28,46 @@ uv sync --all-groups
 pip install -e .
 ```
 
-### Global Installation with pipx (Recommended)
+## Install the Package as a CLI
 
-For the best experience, install the tool globally using pipx:
+In addition to the basic installation, you will need:
 
-```bash
-# Install pipx if you don't have it
-python -m pip install --user pipx
-python -m pipx ensurepath
+- [pipx](https://pypa.github.io/pipx/): A tool to install and run Python applications in isolated environments.
 
-# Install speech-to-console globally
-cd /path/to/speech-to-console
-pipx install -e .
+Now, build the package:
+
+```shell
+uv build
+```
+
+Install the package:
+
+```shell
+uv run pipx install .
+```
+
+Check the installation:
+
+```shell
+speech-to-console --version
+```
+
+### Upgrade the Package
+
+If you need to update the installed CLI tool after making changes:
+
+```shell
+# Build the package
+uv build
+
+# Upgrade the installed package
+uv run pipx upgrade speech-to-console
+```
+
+Check the installation:
+
+```shell
+speech-to-console --version
 ```
 
 This makes the `speech-to-console` command available system-wide without affecting your global Python environment.
