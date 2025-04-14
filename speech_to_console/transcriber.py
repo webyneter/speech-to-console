@@ -143,20 +143,49 @@ class TranscriptionProcessor:
         # Check exact match
         exact_match = self.activation_phrase in text_lower
 
-        # Check for fuzzy matches (common variations)
+        # Generate common variations of the activation phrase
+        activation_words = self.activation_phrase.split(', ')
+        # If activation phrase is like "hey, speechless", we get ["hey", "speechless"]
+        if len(activation_words) > 1:
+            name_part = activation_words[-1]
+        else:
+            name_part = self.activation_phrase
+        greeting_part = activation_words[0] if len(activation_words) > 1 else ""
+
+        # Generate common variations of the greeting part
+        greeting_variations = [greeting_part]
+        if greeting_part == "hey":
+            greeting_variations.extend(["okay", "ok", "k"])
+        elif greeting_part == "okay":
+            greeting_variations.extend(["ok", "k", "hey"])
+
+        # Generate fuzzy matches using variations
         fuzzy_matches = [
-            "okay speechless",
-            "ok speechless",
-            "ok, speechless",
-            "okay speech less",
-            "okay speech-less",
-            "okay space less",
-            "okay, speech less",
-            "k speechless",
-            "okay speechles",
-            "okay speachless",
-            "okay, speachless",
+            f"{g} {name_part}" for g in greeting_variations if g
         ]
+        fuzzy_matches.extend([
+            f"{g}, {name_part}" for g in greeting_variations if g
+        ])
+
+        # Add variations with common misspellings or misheard words
+        has_less = "less" in name_part
+        if has_less:
+            fuzzy_matches.extend([
+                f"{g} {name_part.replace('less', '-less')}"
+                for g in greeting_variations if g
+            ])
+            fuzzy_matches.extend([
+                f"{g} {name_part.replace('less', ' less')}"
+                for g in greeting_variations if g
+            ])
+        fuzzy_matches.extend([
+            f"{g} {name_part}s" for g in greeting_variations if g
+        ])
+
+        # Remove duplicates and the exact activation phrase which is checked separately
+        fuzzy_matches = list(set(fuzzy_matches))
+        if self.activation_phrase in fuzzy_matches:
+            fuzzy_matches.remove(self.activation_phrase)
 
         result = exact_match or any(match in text_lower for match in fuzzy_matches)
 
@@ -204,29 +233,92 @@ class TranscriptionProcessor:
         text_lower = text.lower()
         logger.debug("Extracting command from text", text=text)
 
-        # Check for activation phrase
+        # Check for exact activation phrase
         if self.activation_phrase in text_lower:
             # Extract text after activation phrase
             start_idx = text_lower.find(self.activation_phrase) + len(
                 self.activation_phrase
             )
             command = text[start_idx:].strip()
-            logger.debug("Text after activation phrase", command=command)
+            logger.debug("Text after exact activation phrase", command=command)
+        else:
+            # If no exact match, check for fuzzy matches
+            # Generate all the same fuzzy matches as in is_activation_phrase
+            activation_words = self.activation_phrase.split(', ')
+            if len(activation_words) > 1:
+                name_part = activation_words[-1]
+            else:
+                name_part = self.activation_phrase
+            greeting_part = activation_words[0] if len(activation_words) > 1 else ""
 
-            # Remove deactivation phrase if present
-            for phrase in self.deactivation_phrases:
-                if phrase in command.lower():
-                    end_idx = command.lower().find(phrase)
-                    command = command[:end_idx].strip()
+            # Generate common variations of the greeting part
+            greeting_variations = [greeting_part]
+            if greeting_part == "hey":
+                greeting_variations.extend(["okay", "ok", "k"])
+            elif greeting_part == "okay":
+                greeting_variations.extend(["ok", "k", "hey"])
+
+            # Generate all potential fuzzy matches
+            all_fuzzy_matches = []
+
+            # Plain variations
+            all_fuzzy_matches.extend([
+                f"{g} {name_part}" for g in greeting_variations if g
+            ])
+
+            # Comma variations
+            all_fuzzy_matches.extend([
+                f"{g}, {name_part}" for g in greeting_variations if g
+            ])
+
+            # Add variations with common misspellings
+            has_less = "less" in name_part
+            if has_less:
+                all_fuzzy_matches.extend([
+                    f"{g} {name_part.replace('less', '-less')}"
+                    for g in greeting_variations if g
+                ])
+                all_fuzzy_matches.extend([
+                    f"{g} {name_part.replace('less', ' less')}"
+                    for g in greeting_variations if g
+                ])
+            all_fuzzy_matches.extend([
+                f"{g} {name_part}s" for g in greeting_variations if g
+            ])
+
+            # Sort by length (descending) to find the longest match first
+            all_fuzzy_matches.sort(key=len, reverse=True)
+
+            # Find the first (longest) fuzzy match in the text
+            command = None
+            for fuzzy_match in all_fuzzy_matches:
+                if fuzzy_match in text_lower:
+                    # Extract text after the fuzzy match
+                    start_idx = text_lower.find(fuzzy_match) + len(fuzzy_match)
+                    command = text[start_idx:].strip()
                     logger.debug(
-                        "Removed deactivation phrase",
-                        deactivation_phrase=phrase,
-                        command=command,
+                        "Text after fuzzy match activation phrase",
+                        fuzzy_match=fuzzy_match,
+                        command=command
                     )
+                    break
 
-            result = command if command else None
-            logger.debug("Command extraction result", result=result)
-            return result
+            # If no fuzzy match found, return None
+            if command is None:
+                logger.debug("No activation phrase in text, returning None")
+                return None
 
-        logger.debug("No activation phrase in text, returning None")
-        return None
+        # Remove deactivation phrase if present
+        for phrase in self.deactivation_phrases:
+            if phrase in command.lower():
+                end_idx = command.lower().find(phrase)
+                command = command[:end_idx].strip()
+                logger.debug(
+                    "Removed deactivation phrase",
+                    deactivation_phrase=phrase,
+                    command=command,
+                )
+
+        result = command if command else None
+        logger.debug("Command extraction result", result=result)
+        return result

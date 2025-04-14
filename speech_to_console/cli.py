@@ -41,11 +41,13 @@ async def process_audio(
         keyboard: Keyboard controller instance
     """
     console.print(
-        "Listening for activation phrase: 'okay, speechless'",
+        f"Listening for activation phrase: '{processor.activation_phrase}'",
         style=Style(color="green", bold=True),
     )
+    # Format deactivation phrases to display to user
+    deactivation_list = "', '".join(processor.deactivation_phrases)
     console.print(
-        "Say 'end speechless' or 'that's it for speechless' to stop transcription",
+        f"Say '{deactivation_list}' to stop transcription",
         style=Style(color="green"),
     )
 
