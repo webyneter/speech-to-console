@@ -95,6 +95,21 @@ ruff check .
 ruff format .
 ```
 
+### Customization
+
+You can customize the tool behavior by modifying these files:
+
+- `speech_to_console/config.py`: Change activation/deactivation phrases 
+- `speech_to_console/audio.py`: Adjust audio recording parameters
+- `speech_to_console/keyboard.py`: Modify typing speed and behavior
+
+### Troubleshooting
+
+- **Microphone not working**: Check your system's audio input settings
+- **API errors**: Verify your API key in the `.env` file
+- **Text not being typed**: Make sure you've clicked on the target window
+- **Transcription quality issues**: Try speaking more clearly or adjusting your microphone
+
 ## License
 
 MIT
