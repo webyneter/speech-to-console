@@ -60,8 +60,11 @@ If you need to update the installed CLI tool after making changes:
 # Build the package
 uv build
 
-# Upgrade the installed package
+# Option 1: Upgrade the installed package
 uv run pipx upgrade speech-to-console
+
+# Option 2: If you had a development install or significant changes
+uv run pipx install --force .
 ```
 
 Check the installation:
