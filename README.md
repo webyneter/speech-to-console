@@ -33,6 +33,7 @@ pip install -e .
 In addition to the basic installation, you will need:
 
 - [pipx](https://pypa.github.io/pipx/): A tool to install and run Python applications in isolated environments.
+- PortAudio: A system library for audio input/output (install with `sudo apt-get install portaudio19-dev` on Ubuntu/Debian)
 
 Now, build the package:
 
