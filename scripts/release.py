@@ -273,6 +273,7 @@ def git_commands(new_version, files_to_commit):
     print(f"Changes committed and tag v{new_version} created")
     print("\nTo push changes and trigger a release, run:")
     print(f"  git push && git push origin v{new_version}")
+    print("\nNOTE: The release workflow will only run if the build workflow succeeds.")
 
 
 def main():

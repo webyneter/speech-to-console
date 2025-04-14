@@ -1,6 +1,12 @@
 name: Release
 
 on:
+  workflow_run:
+    workflows: ["Build and Test"]
+    types:
+      - completed
+    branches:
+      - main
   push:
     tags:
       - 'v*'
@@ -8,6 +14,10 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    # Only run this job when the workflow was triggered by a tag push and the build was successful
+    if: |
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && startsWith(github.event.workflow_run.head_branch, 'v'))
     permissions:
       contents: write
     steps:
