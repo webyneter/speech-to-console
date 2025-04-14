@@ -1,6 +1,10 @@
 """Keyboard interaction for typing in terminal."""
 
 import time
+import os
+
+# Set environment variable to bypass tkinter check in PyAutoGUI
+os.environ['PYAUTOGUI_RUNNING_HEADLESS'] = 'True'
 
 import pyautogui
 

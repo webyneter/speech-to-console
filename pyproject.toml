@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "speech-to-console"
 version = "0.1.0"
 description = "Convert spoken commands to console operations"
-requires-python = ">=3.12"
+requires-python = "==3.10.*"
 authors = [
     {name = "Your Name", email = "your.email@example.com"},
 ]
@@ -34,7 +34,7 @@ speech-to-console = "speech_to_console.cli:app"
 
 [tool.ruff]
 line-length = 88
-target-version = "py312"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "W"]

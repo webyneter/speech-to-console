@@ -14,7 +14,13 @@ sudo apt-get update
 
 # Install PortAudio and other runtime dependencies
 echo -e "${YELLOW}Installing runtime dependencies...${NC}"
-sudo apt-get install -y portaudio19-dev python3-pyaudio python3-tk python3-dev
+# https://pyautogui.readthedocs.io/en/latest/install.html#linux
+sudo apt-get install -y \
+  portaudio19-dev \
+  python3-pyaudio \
+  scrot \
+  python3-tk \
+  python3-dev
 
 echo -e "\n${GREEN}Runtime dependencies installed successfully!${NC}"
 echo -e "${YELLOW}See README.md for next steps.${NC}"

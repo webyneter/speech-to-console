@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Run CLI: `python -m speech_to_console [COMMAND]` or `speech-to-console [COMMAND]`
 
 ## Code Style Guidelines
-- Python version: 3.12+
+- Python version: 3.10
 - Package manager: uv with lock file
 - CLI framework: Typer
 - Follow PEP 8 and use ruff for code formatting/linting
