@@ -98,7 +98,7 @@ uv run python ./scripts/release.py 0.2.3 --dry-run
 ```
 
 This single command will:
-1. Update the version in `pyproject.toml`
+1. Update the version in `pyproject.toml` and `__init__.py`
 2. Generate CHANGELOG entries from commit history
 3. Commit the changes
 4. Create a git tag for the release

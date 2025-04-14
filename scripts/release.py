@@ -35,6 +35,31 @@ def update_pyproject_version(pyproject_path, new_version):
     return old_version
 
 
+def update_init_version(repo_root, new_version):
+    """Update version in __init__.py"""
+    init_path = os.path.join(repo_root, "speech_to_console", "__init__.py")
+    
+    if not os.path.exists(init_path):
+        print(f"Warning: Could not find {init_path}")
+        return False
+    
+    with open(init_path, "r") as f:
+        content = f.read()
+    
+    # Replace version string
+    new_content = re.sub(
+        r'__version__ = "[^"]+"',
+        f'__version__ = "{new_version}"',
+        content
+    )
+    
+    with open(init_path, "w") as f:
+        f.write(new_content)
+    
+    print(f"Updated version in {init_path}")
+    return True
+
+
 def get_last_tag():
     """Get the most recent tag from git history"""
     try:
@@ -250,15 +275,18 @@ def main():
     if args.dry_run:
         print("\nDRY RUN: No changes will be made")
         print(f"Would update pyproject.toml version from {current_version} to {new_version}")
+        print(f"Would update __init__.py version from {current_version} to {new_version}")
         print(f"Would generate changelog entries in {changelog_path}")
         print(f"Would commit changes and create tag v{new_version}")
         return
     
     # Update files
     update_pyproject_version(pyproject_path, new_version)
+    update_init_version(repo_root, new_version)
     generate_changelog(changelog_path, new_version)
     
-    files_to_commit = [pyproject_path, changelog_path]
+    init_path = os.path.join(repo_root, "speech_to_console", "__init__.py")
+    files_to_commit = [pyproject_path, changelog_path, init_path]
     
     # Git operations
     if not args.no_git:
