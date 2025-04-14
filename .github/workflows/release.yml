@@ -63,15 +63,28 @@ jobs:
       - name: Extract changelog
         id: changelog
         run: |
-          # Try to extract existing changelog content
-          CONTENT=$(grep -A 50 "## \[Unreleased\]" CHANGELOG.md | grep -B 50 "## \[" | head -n -1 || echo "")
+          # Get current version section only
+          VERSION_PATTERN="## \\[$VERSION\\]"
+          NEXT_VERSION_PATTERN="## \\["
 
-          # If no content, use default
-          if [ -z "$CONTENT" ]; then
+          # Find the line number where current version starts
+          START_LINE=$(grep -n "$VERSION_PATTERN" CHANGELOG.md | cut -d: -f1)
+
+          if [ -z "$START_LINE" ]; then
+            # If version not found, use default content
             echo "CHANGELOG_CONTENT=$DEFAULT_CONTENT" >> $GITHUB_OUTPUT
           else
-            # Replace Unreleased with version
-            CONTENT="## [$VERSION] - $TODAY\n\n${CONTENT#*## \[Unreleased\]}"
+            # Find the next version section (or EOF if this is the latest version)
+            END_LINE=$(tail -n +$((START_LINE+1)) CHANGELOG.md | grep -n "$NEXT_VERSION_PATTERN" | head -1 | cut -d: -f1)
+
+            if [ -z "$END_LINE" ]; then
+              # No next version found, read until end of file
+              CONTENT=$(tail -n +$START_LINE CHANGELOG.md)
+            else
+              # Get only the current version's content
+              CONTENT=$(tail -n +$START_LINE CHANGELOG.md | head -n $((END_LINE-1)))
+            fi
+
             echo "CHANGELOG_CONTENT<<EOF" >> $GITHUB_OUTPUT
             echo "$CONTENT" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
