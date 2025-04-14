@@ -19,7 +19,7 @@ class Config(BaseModel):
     log_level: LogLevel = Field("INFO", description="Logging level")
 
     # Speech recognition settings
-    activation_phrase: str = "okay, speechless"
+    activation_phrase: str = "hey, speechless"
     deactivation_phrases: list[str] = [
         "end speechless",
         "that's it for speechless",
