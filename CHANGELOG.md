@@ -1,0 +1,54 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.2.0] - 2025-04-14
+
+### Added
+- Streaming transcription support for improved responsiveness
+- Parallel processing of audio chunks for faster results
+- Support for multiple activation and deactivation phrases
+- New config options: `USE_STREAMING` and `STREAM_CHUNK_SIZE_MS`
+
+### Fixed
+- Fixed streaming audio transcription errors
+- Improved deactivation phrase detection and handling
+- Added fuzzy matching for deactivation phrases
+- Fixed issue where deactivation phrases weren't properly stopping transcription
+
+### Changed
+- Reduced default streaming chunk size for improved responsiveness
+- Made transcription process more resilient with better error handling
+- Enhanced README with detailed streaming documentation
+- Dynamically generate fuzzy matching based on activation phrases
+
+## [0.1.0] - 2025-04-14
+
+### Added
+- Initial release of speech-to-console
+- Core functionality for speech-to-text transcription using OpenAI's Whisper API
+- Voice-activated command transcription for terminal
+- Support for activation with custom phrase and deactivation with multiple phrases
+- Advanced noise detection for better accuracy
+- Comprehensive unit tests for AudioRecorder, KeyboardController, and WhisperTranscriber
+
+### Fixed
+- Enhanced noise detection with amplitude variance analysis
+- Fixed issues with random gibberish transcriptions
+- Fixed transcription handling of activation/deactivation phrases
+- Fixed command extraction to properly handle different phrase variants
+
+### Changed
+- Updated README with detailed instructions and troubleshooting
+- Improved logging with detailed diagnostics for speech characteristics
+- Adjusted audio sensitivity settings for different environments
+- Updated activation phrase to be more distinctive and reliable
+
+[Unreleased]: https://github.com/webyneter/speech-to-console/compare/0.2.0...HEAD
+[0.2.0]: https://github.com/webyneter/speech-to-console/compare/0.1.0...0.2.0
+[0.1.0]: https://github.com/webyneter/speech-to-console/releases/tag/0.1.0
