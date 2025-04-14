@@ -113,14 +113,14 @@ def test_record_until_silence_basic(mock_np_abs, mock_input_stream, audio_record
     sample_size = (audio_recorder.blocksize, audio_recorder.channels)
 
     # Create frames with large amplitude variance to be detected as speech
-    frame1 = np.ones(sample_size, dtype=np.int16) * 150
-    frame2 = np.ones(sample_size, dtype=np.int16) * 150
+    frame1 = np.ones(sample_size, dtype=np.int16) * 500
+    frame2 = np.ones(sample_size, dtype=np.int16) * 500
     frame3 = np.ones(sample_size, dtype=np.int16) * 10
 
     # Mock amplitude standard deviation to pass speech detection
     mock_std = MagicMock(return_value=30.0)  # High enough to be considered speech
     mock_np_abs.return_value.std = mock_std
-    mock_np_abs.return_value.max = MagicMock(side_effect=[150, 150, 10])
+    mock_np_abs.return_value.max = MagicMock(side_effect=[500, 500, 10])
 
     # Setup mock return values
     mock_stream.read.side_effect = [
@@ -156,9 +156,9 @@ def test_noise_detection(mock_input_stream, audio_recorder):
 
     # Create frames with constant amplitude (above threshold but low variance)
     # This simulates constant background noise
-    frame1 = np.ones(sample_size, dtype=np.int16) * 120
-    frame2 = np.ones(sample_size, dtype=np.int16) * 120
-    frame3 = np.ones(sample_size, dtype=np.int16) * 120
+    frame1 = np.ones(sample_size, dtype=np.int16) * 400
+    frame2 = np.ones(sample_size, dtype=np.int16) * 410
+    frame3 = np.ones(sample_size, dtype=np.int16) * 390
 
     mock_stream.read.side_effect = [
         (frame1, False),
@@ -191,14 +191,14 @@ def test_true_speech_detection(mock_np_abs, mock_input_stream, audio_recorder):
     sample_size = (audio_recorder.blocksize, audio_recorder.channels)
 
     # Create frames that simulate speech
-    frame1 = np.random.randint(120, 200, sample_size, dtype=np.int16)
-    frame2 = np.random.randint(100, 180, sample_size, dtype=np.int16)
-    frame3 = np.random.randint(110, 190, sample_size, dtype=np.int16)
+    frame1 = np.random.randint(400, 600, sample_size, dtype=np.int16)
+    frame2 = np.random.randint(375, 550, sample_size, dtype=np.int16)
+    frame3 = np.random.randint(425, 575, sample_size, dtype=np.int16)
 
     # Setup mocks for amplitude calculations
     mock_std = MagicMock(return_value=40.0)  # High variance
     mock_np_abs.return_value.std = mock_std
-    mock_np_abs.return_value.max = MagicMock(side_effect=[180, 170, 180, 0])
+    mock_np_abs.return_value.max = MagicMock(side_effect=[550, 500, 525, 0])
 
     mock_stream.read.side_effect = [
         (frame1, False),
