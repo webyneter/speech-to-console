@@ -118,9 +118,9 @@ speech-to-console --log-level DEBUG
 ```
 
 3. In the second window, make it active (click on it)
-4. Say "hey stt" to start transcription
+4. Say "okay, speechless" to start transcription
 5. Speak the commands you want typed into the terminal
-6. Say "end stt" or "that's it for stt" to stop transcription
+6. Say "end speechless" or "that's it for speechless" to stop transcription
 
 ### How It Works
 
@@ -130,7 +130,9 @@ When you run the tool, it listens continuously for the activation phrase. Once d
 2. Spoken words are sent to the OpenAI Whisper API for transcription
 3. The transcribed text is typed into your active terminal window
 4. When a deactivation phrase is detected, the tool returns to listening mode
-5. Press Ctrl+C in the speech-to-console window to exit the program completely
+5. The tool only processes commands between activation and deactivation phrases
+6. Background noise and speech outside of active sessions are ignored
+7. Press Ctrl+C in the speech-to-console window to exit the program completely
 
 ## Development
 
@@ -211,6 +213,8 @@ You can customize the tool behavior by modifying these files:
   - If you're getting transcriptions when not speaking, increase the SILENT_THRESHOLD value
   - Try values between 100-200 depending on your environment
   - The app now detects and ignores very low amplitude audio
+  - Speech is only processed between activation and deactivation phrases
+  - Background noise and speech outside the activation-deactivation cycle are ignored
 
 ## License
 

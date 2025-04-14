@@ -142,7 +142,7 @@ class TranscriptionProcessor:
         text_lower = text.lower()
         # Check exact match
         exact_match = self.activation_phrase in text_lower
-        
+
         # Check for fuzzy matches (common variations)
         fuzzy_matches = [
             "okay speechless",
@@ -155,9 +155,9 @@ class TranscriptionProcessor:
             "k speechless",
             "okay speechles",
             "okay speachless",
-            "okay, speachless"
+            "okay, speachless",
         ]
-        
+
         result = exact_match or any(match in text_lower for match in fuzzy_matches)
 
         if result:

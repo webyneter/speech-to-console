@@ -19,7 +19,7 @@ class KeyboardController:
             delay_between_chars: Delay between keypresses in seconds
         """
         self.delay = delay_between_chars
-        # Disable fail-safe since we're only typing text, not controlling mouse movements
+        # Disable fail-safe since we're only typing text (not mouse movements)
         pyautogui.FAILSAFE = False
         pyautogui.PAUSE = self.delay
 

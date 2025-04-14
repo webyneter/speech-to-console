@@ -56,6 +56,9 @@ async def process_audio(
     )
 
     is_active = False
+    in_valid_cycle = (
+        False  # Flag to track if we're in a valid activation-deactivation cycle
+    )
 
     while True:
         try:
@@ -64,7 +67,7 @@ async def process_audio(
             audio_data = audio_recorder.record_until_silence(
                 max_seconds=3, silence_threshold=5
             )
-            
+
             # Skip processing if audio data is all zeros (background noise)
             if np.all(audio_data == 0):
                 logger.debug("Skipping empty audio (background noise)")
@@ -77,8 +80,11 @@ async def process_audio(
                 "Audio recorded and converted", audio_length_samples=len(audio_data)
             )
 
-            # Transcribe
-            logger.debug("Transcribing audio", model=transcriber.model)
+            # Always process for activation phrase detection
+            logger.debug(
+                "Transcribing audio for control phrase detection",
+                model=transcriber.model,
+            )
             transcription = await transcriber.transcribe(audio_bytes)
 
             if not transcription:
@@ -86,22 +92,29 @@ async def process_audio(
                 continue
 
             logger.debug(
-                "Transcription received", raw_text=transcription, is_active=is_active
+                "Transcription received",
+                raw_text=transcription,
+                is_active=is_active,
+                in_valid_cycle=in_valid_cycle,
             )
-            
-            # Add visual feedback when not active
-            if not is_active:
-                console.print(
-                    f"👂 Heard: '{transcription}'", 
-                    style=Style(color="blue", dim=True)
-                )
 
-            # Check for activation phrase
+            # Check for activation phrase - always do this
             if not is_active and processor.is_activation_phrase(transcription):
                 is_active = True
-                logger.info("Activation phrase detected", transcription=transcription)
+                in_valid_cycle = True  # Start of a valid cycle
+                logger.info(
+                    "Activation phrase detected",
+                    transcription=transcription,
+                    cycle_started=True,
+                )
+                # Truncate transcription if too long
+                max_len = 35
+                detected_in = transcription
+                if len(detected_in) > max_len:
+                    detected_in = detected_in[:max_len] + "..."
+                msg = f"✅ Activated! Transcribing to terminal... ('{detected_in}')"
                 console.print(
-                    f"✅ Activated! Transcribing to active terminal... (Detected in: '{transcription}')",
+                    msg,
                     style=Style(color="green", bold=True),
                 )
 
@@ -113,14 +126,28 @@ async def process_audio(
                     )
                     console.print(f"🔤 Typing: {command}")
                     keyboard.type_text(command)
+                continue
+
+            # If not in a valid cycle, show what was heard but don't process further
+            if not in_valid_cycle:
+                # Only show occasional feedback when listening for activation
+                if not is_active:
+                    console.print(
+                        f"👂 Listening... (Heard: '{transcription}')",
+                        style=Style(color="blue", dim=True),
+                    )
+                continue
 
             # Process transcription when active
-            elif is_active:
+            if is_active:
                 # Check for deactivation phrase
                 if processor.is_deactivation_phrase(transcription):
                     is_active = False
+                    in_valid_cycle = False  # End of valid cycle
                     logger.info(
-                        "Deactivation phrase detected", transcription=transcription
+                        "Deactivation phrase detected",
+                        transcription=transcription,
+                        cycle_ended=True,
                     )
                     console.print(
                         "⛔ Deactivated. Listening for activation phrase...",
@@ -207,7 +234,9 @@ def main(
         )
 
         # Initialize components
-        logger.debug("Initializing audio recorder", silent_threshold=config.silent_threshold)
+        logger.debug(
+            "Initializing audio recorder", silent_threshold=config.silent_threshold
+        )
         audio_recorder = AudioRecorder(silent_threshold=config.silent_threshold)
 
         logger.debug("Initializing transcriber", model=config.whisper_model)

@@ -133,7 +133,7 @@ class AudioRecorder:
         max_chunks = int(self.rate / self.blocksize * max_seconds)
         silent_chunks = 0
         start_time = time.time()
-        
+
         # Track overall max amplitude to detect if any real speech occurred
         overall_max_amplitude = 0
 
@@ -144,7 +144,7 @@ class AudioRecorder:
             # Check for silence
             max_amplitude = np.abs(data).max()
             overall_max_amplitude = max(overall_max_amplitude, max_amplitude)
-            
+
             if max_amplitude < self.silent_threshold:
                 silent_chunks += 1
                 logger.debug(
@@ -159,7 +159,7 @@ class AudioRecorder:
                     break
             else:
                 silent_chunks = 0
-                
+
         # If maximum amplitude was very low, this was probably just background noise
         if overall_max_amplitude < self.silent_threshold * 1.5:
             logger.debug(

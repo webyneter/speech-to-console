@@ -20,10 +20,16 @@ class Config(BaseModel):
 
     # Speech recognition settings
     activation_phrase: str = "okay, speechless"
-    deactivation_phrases: list[str] = ["end speechless", "that's it for speechless", "stop speechless"]
-    
+    deactivation_phrases: list[str] = [
+        "end speechless",
+        "that's it for speechless",
+        "stop speechless",
+    ]
+
     # Audio settings
-    silent_threshold: int = Field(100, description="Threshold for silence detection (lower = more sensitive)")
+    silent_threshold: int = Field(
+        100, description="Threshold for silence detection (lower = more sensitive)"
+    )
 
 
 def load_config() -> Config:
