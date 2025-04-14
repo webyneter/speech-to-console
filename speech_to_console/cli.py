@@ -198,9 +198,10 @@ async def process_audio(
 
             # Process transcription when active
             if is_active:
-                # Check for deactivation phrase
-                if processor.is_deactivation_phrase(transcription):
-                    is_active = False
+                # Check for deactivation phrase - prioritize this check
+                is_deactivation = processor.is_deactivation_phrase(transcription)
+                if is_deactivation:
+                    is_active = False  # Immediately set to inactive
                     in_valid_cycle = False  # End of valid cycle
                     logger.info(
                         "Deactivation phrase detected",
@@ -209,8 +210,10 @@ async def process_audio(
                     )
                     console.print(
                         "⛔ Deactivated. Listening for activation phrase...",
-                        style=Style(color="red"),
+                        style=Style(color="red", bold=True),
                     )
+                    # Force a short pause to ensure we don't immediately process next chunk
+                    await asyncio.sleep(0.5)
                     continue
 
                 # Type transcription (excluding control phrases)

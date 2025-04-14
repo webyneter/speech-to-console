@@ -210,14 +210,69 @@ class TranscriptionProcessor:
         """
         text_lower = text.lower()
 
+        # Try exact matches first
         for phrase in self.deactivation_phrases:
             if phrase in text_lower:
                 logger.debug(
-                    "Deactivation phrase detected",
+                    "Deactivation phrase detected (exact match)",
                     text=text,
                     deactivation_phrase=phrase,
                 )
                 return True
+
+        # Generate common variations of deactivation phrases
+        fuzzy_deactivation_matches = []
+
+        # Common variations and mistakes for each deactivation phrase
+        for phrase in self.deactivation_phrases:
+            # Basic phrase components
+            base_words = phrase.split()
+            if len(base_words) >= 2 and "speechless" in phrase:
+                # For phrases like "end speechless", "stop speechless"
+                action_word = base_words[0]  # "end", "stop", etc.
+
+                # Add variations with alternative spellings and common transcription errors
+                fuzzy_deactivation_matches.extend([
+                    f"{action_word} speechless",
+                    f"{action_word} speech less",
+                    f"{action_word} speech-less",
+                    f"{action_word} speachless",
+                    f"{action_word} speech list",
+                    f"{action_word} speechlist",
+                ])
+
+                # Add related words with similar meaning
+                if action_word == "end":
+                    fuzzy_deactivation_matches.extend([
+                        "finish speechless",
+                        "close speechless",
+                        "exit speechless",
+                        "terminate speechless",
+                    ])
+                elif action_word == "stop":
+                    fuzzy_deactivation_matches.extend([
+                        "halt speechless",
+                        "pause speechless",
+                        "cancel speechless",
+                    ])
+
+        # Check for fuzzy matches
+        for fuzzy_match in fuzzy_deactivation_matches:
+            if fuzzy_match in text_lower:
+                logger.debug(
+                    "Deactivation phrase detected (fuzzy match)",
+                    text=text,
+                    fuzzy_match=fuzzy_match,
+                )
+                return True
+
+        # Special case for "that's it for speechless" which is often misheard
+        if "that's it" in text_lower and "speech" in text_lower:
+            logger.debug(
+                "Deactivation phrase detected (partial match)",
+                text=text,
+            )
+            return True
 
         return False
 
@@ -308,14 +363,54 @@ class TranscriptionProcessor:
                 logger.debug("No activation phrase in text, returning None")
                 return None
 
-        # Remove deactivation phrase if present
-        for phrase in self.deactivation_phrases:
-            if phrase in command.lower():
-                end_idx = command.lower().find(phrase)
+        # Remove deactivation phrases if present
+        if command:
+            # First check exact deactivation phrases
+            for phrase in self.deactivation_phrases:
+                if phrase in command.lower():
+                    end_idx = command.lower().find(phrase)
+                    command = command[:end_idx].strip()
+                    logger.debug(
+                        "Removed exact deactivation phrase",
+                        deactivation_phrase=phrase,
+                        command=command,
+                    )
+
+            # Then check for fuzzy matches of deactivation phrases
+            fuzzy_deactivation_matches = []
+
+            # Generate fuzzy matches similar to is_deactivation_phrase
+            for phrase in self.deactivation_phrases:
+                base_words = phrase.split()
+                if len(base_words) >= 2 and "speechless" in phrase:
+                    action_word = base_words[0]
+
+                    fuzzy_deactivation_matches.extend([
+                        f"{action_word} speechless",
+                        f"{action_word} speech less",
+                        f"{action_word} speech-less",
+                        f"{action_word} speachless",
+                    ])
+
+            # Check and remove any fuzzy deactivation matches
+            for fuzzy_match in fuzzy_deactivation_matches:
+                if fuzzy_match in command.lower():
+                    end_idx = command.lower().find(fuzzy_match)
+                    command = command[:end_idx].strip()
+                    logger.debug(
+                        "Removed fuzzy deactivation phrase",
+                        fuzzy_match=fuzzy_match,
+                        command=command,
+                    )
+
+            # Special case for "that's it for speechless" which is often misheard
+            if "that's it" in command.lower() and "speech" in command.lower():
+                # Find the starting position of "that's it"
+                end_idx = command.lower().find("that's it")
                 command = command[:end_idx].strip()
                 logger.debug(
-                    "Removed deactivation phrase",
-                    deactivation_phrase=phrase,
+                    "Removed partial deactivation phrase",
+                    partial_phrase="that's it ... speech",
                     command=command,
                 )
 
