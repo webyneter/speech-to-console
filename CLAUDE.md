@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Overall, any commands targeting the Python codebase must be run via `uv`
 - Launch CLI locally: `uv run speech-to-console`
 - Launch CLI locally with the specified log level: `uv run speech-to-console --log-level DEBUG`
+- Run `uv run pre-commit run --all-files`, rather than `ruff` commands iteratively, to save time
 
 ## Code Style Guidelines
 - Python version: 3.10
