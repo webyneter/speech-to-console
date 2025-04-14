@@ -28,10 +28,14 @@ dev = [
     "pytest",
     "pytest-cov",
     "ruff",
+    "tomli",
+    "tomli-w",
 ]
 
 [project.scripts]
 speech-to-console = "speech_to_console.cli:app"
+changelog-gen = "scripts.generate_changelog:main"
+version-bump = "scripts.bump_version:main"
 
 [tool.ruff]
 line-length = 88

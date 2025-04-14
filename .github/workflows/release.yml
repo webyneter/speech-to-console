@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install system dependencies
+        run: |
+          chmod +x ./install_dependencies.sh
+          ./install_dependencies.sh
+          
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Build package
+        run: uv build
+
+      - name: Extract version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+        
+      - name: Update CHANGELOG.md
+        id: changelog
+        run: |
+          # Get today's date
+          TODAY=$(date +"%Y-%m-%d")
+          
+          # Extract changelog content for this version
+          CONTENT=$(awk -v version="$VERSION" '
+          BEGIN { unreleased=0; found=0; }
+          /^## \[Unreleased\]/ { unreleased=1; next; }
+          /^## \[[0-9]+\.[0-9]+\.[0-9]+\]/ { 
+            if (unreleased==1) {
+              print "## [" version "] - " "'$TODAY'"
+              unreleased=0; 
+              found=1;
+            } else if (found==1) {
+              exit;
+            }
+          }
+          unreleased==1 || found==1 { print; }
+          ' CHANGELOG.md)
+          
+          # If no content is found in the Unreleased section, use generic message
+          if [ -z "$CONTENT" ]; then
+            CONTENT="## [$VERSION] - $TODAY
+
+### Added
+- New release version $VERSION"
+          fi
+          
+          echo "CHANGELOG_CONTENT<<EOF" >> $GITHUB_OUTPUT
+          echo "$CONTENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body: ${{ steps.changelog.outputs.CHANGELOG_CONTENT }}
+          files: dist/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
