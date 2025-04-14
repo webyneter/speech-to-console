@@ -2,6 +2,9 @@
 
 A voice-controlled tool that converts spoken commands to text in your terminal using OpenAI's Whisper API.
 
+_N.B. This tool is not specifically designed for any particular terminal or console. It is a general-purpose tool that
+can be used with anything that accepts text input._
+
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
@@ -16,7 +19,9 @@ A voice-controlled tool that converts spoken commands to text in your terminal u
 
 ## 🔍 Overview
 
-Speech to Console lets you control your terminal with voice commands. Just say "hey, speechless" to activate, speak your commands, and say "end speechless" when you're done. The tool transcribes your speech and types it directly into your terminal.
+Speech to Console lets you control your terminal with voice commands. Just say "hey, speechless" to activate, speak your
+commands, and say "end speechless" when you're done. The tool transcribes your speech and types it directly into your
+terminal.
 
 ## ✨ Key Features
 
@@ -29,7 +34,7 @@ Speech to Console lets you control your terminal with voice commands. Just say "
 - **Parallel processing** of audio chunks for faster results
 
 ## 🧰 Requirements
- 
+
 - [uv](https://docs.astral.sh/uv/): An extremely fast Python package and project manager, written in Rust
 - Python 3.10 (specifically required due to PyAutoGUI compatibility): `uv` will install the Python for you if needed
 - OpenAI API key
@@ -98,11 +103,11 @@ STREAM_CHUNK_SIZE_MS=500          # Size of audio chunks for streaming (millisec
 
 ### Audio Sensitivity Settings
 
-| Environment      | Recommended SILENT_THRESHOLD |
-|------------------|------------------------------|
-| Quiet            | 100-150                      |
-| Normal ambient   | 200-300                      |
-| Noisy            | 400-500                      |
+| Environment    | Recommended SILENT_THRESHOLD |
+|----------------|------------------------------|
+| Quiet          | 100-150                      |
+| Normal ambient | 200-300                      |
+| Noisy          | 400-500                      |
 
 ## 🚀 Usage
 
@@ -118,9 +123,9 @@ STREAM_CHUNK_SIZE_MS=500          # Size of audio chunks for streaming (millisec
 2. Click on your target terminal window where you want text typed
 
 3. Voice commands:
-   - Say **"hey, speechless"** to activate (default activation phrase)
-   - Speak your commands
-   - Say **"end speechless"** to deactivate (default deactivation phrase)
+    - Say **"hey, speechless"** to activate (default activation phrase)
+    - Speak your commands
+    - Say **"end speechless"** to deactivate (default deactivation phrase)
 
 ### How It Works
 
@@ -138,6 +143,7 @@ Speech to Console uses a parallel streaming approach that:
 4. Falls back to regular batch processing if streaming encounters issues
 
 You can adjust streaming settings in your `.env` file:
+
 ```env
 USE_STREAMING=true                # Enable/disable streaming (true/false)
 STREAM_CHUNK_SIZE_MS=500          # Chunk size in milliseconds (smaller = faster response)
@@ -148,20 +154,24 @@ STREAM_CHUNK_SIZE_MS=500          # Chunk size in milliseconds (smaller = faster
 ### Common Issues
 
 #### Microphone Problems
+
 - Verify your microphone is working and properly configured in system settings
 - Test with `arecord -d 5 test.wav && aplay test.wav` to confirm audio recording works
 
 #### Activation Phrase Not Detected
+
 - Speak clearly and directly into the microphone
 - Run with `--log-level DEBUG` to see what's being transcribed
 - Try adjusting environment variables in `.env`
 
 #### False Transcriptions
+
 - Increase `SILENT_THRESHOLD` (try 300-500 for noisy environments)
 - Increase `MIN_AUDIO_DURATION_SECONDS` to 0.7 or 1.0
 - Ensure you're in a reasonably quiet environment
 
 #### Text Not Being Typed
+
 - Ensure the target window is active
 - If using Wayland, try switching to X11 (PyAutoGUI works better with X11)
 - Run with `--verbose` flag to see detailed logs
