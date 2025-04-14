@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.6] - 2025-04-14
+
+### Fixed
+- Fix test failures by properly mocking audio processing
+- Fix test failures caused by sensitivity threshold updates
+
+### Changed
+- Update CLAUDE.md with pre-commit run command for efficiency
+- Enhance audio tests with improved mocking and assertions
+
+
 ## [0.3.5] - 2025-04-14
 
 ### Fixed
@@ -186,7 +197,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adjusted audio sensitivity settings for different environments
 - Updated activation phrase to be more distinctive and reliable
 
-[Unreleased]: https://github.com/webyneter/speech-to-console/compare/v0.3.5...HEAD
+[Unreleased]: https://github.com/webyneter/speech-to-console/compare/v0.3.6...HEAD
+[0.3.6]: https://github.com/webyneter/speech-to-console/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/webyneter/speech-to-console/compare/v0.3.3...v0.3.5
 [0.3.3]: https://github.com/webyneter/speech-to-console/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/webyneter/speech-to-console/compare/v0.3.1...v0.3.2
