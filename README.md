@@ -113,7 +113,7 @@ GitHub Actions will automatically:
 - Build the package
 - Create a GitHub release with the changelog contents
 - Attach the built package to the release
-- Publish the package to GitHub Packages registry
+- Publish the package to PyPI
 
 ## ⚙️ Configuration
 
