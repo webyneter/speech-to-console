@@ -1,4 +1,5 @@
 """Command-line interface for Speech to Console."""
+
 import asyncio
 import sys
 from pathlib import Path
@@ -28,7 +29,7 @@ async def process_audio(
     keyboard: KeyboardController,
 ) -> None:
     """Process audio input continuously.
-    
+
     Args:
         audio_recorder: Audio recorder instance
         transcriber: Whisper transcriber instance
@@ -43,25 +44,25 @@ async def process_audio(
         "Say 'end stt' or 'that's it for stt' to stop transcription",
         style=Style(color="green"),
     )
-    
+
     is_active = False
-    
+
     while True:
         try:
             # Record audio chunk (approx. 2-3 seconds)
             audio_data = audio_recorder.record_until_silence(
                 max_seconds=3, silence_threshold=5
             )
-            
+
             # Convert to bytes IO for API submission
             audio_bytes = audio_recorder.audio_to_bytes_io(audio_data)
-            
+
             # Transcribe
             transcription = await transcriber.transcribe(audio_bytes)
-            
+
             if not transcription:
                 continue
-            
+
             # Check for activation phrase
             if not is_active and processor.is_activation_phrase(transcription):
                 is_active = True
@@ -69,13 +70,13 @@ async def process_audio(
                     "✅ Activated! Transcribing to active terminal...",
                     style=Style(color="green", bold=True),
                 )
-                
+
                 # Extract command if it's in the same utterance
                 command = processor.extract_command(transcription)
                 if command:
                     console.print(f"🔤 Typing: {command}")
                     keyboard.type_text(command)
-            
+
             # Process transcription when active
             elif is_active:
                 # Check for deactivation phrase
@@ -86,15 +87,15 @@ async def process_audio(
                         style=Style(color="red"),
                     )
                     continue
-                
+
                 # Type transcription (excluding control phrases)
                 command = processor.extract_command(transcription)
                 if not command:
                     command = transcription
-                
+
                 console.print(f"🔤 Typing: {command}")
                 keyboard.type_text(command)
-            
+
         except KeyboardInterrupt:
             break
         except Exception as e:
@@ -110,27 +111,27 @@ def main(
     """Convert spoken commands to console operations."""
     if ctx.invoked_subcommand is not None:
         return
-    
+
     # Ensure .env file exists
     env_path = Path(".env")
     example_env_path = Path("example.env")
-    
+
     if not env_path.exists() and example_env_path.exists():
         console.print(
-            "⚠️ [yellow].env file not found. Please create one using example.env as a template.[/yellow]"
+            "⚠️ [yellow].env file not found. Copy example.env to .env first.[/yellow]"
         )
         sys.exit(1)
-    
+
     try:
         # Load configuration
         config = load_config()
-        
+
         # Initialize components
         audio_recorder = AudioRecorder()
         transcriber = WhisperTranscriber(config)
         processor = TranscriptionProcessor(config)
         keyboard = KeyboardController()
-        
+
         # Start processing
         console.print(
             "🎤 Speech to Console started",
@@ -140,19 +141,18 @@ def main(
             "Press Ctrl+C to exit",
             style=Style(color="yellow"),
         )
-        
+
         # Run the main loop
         try:
-            asyncio.run(
-                process_audio(audio_recorder, transcriber, processor, keyboard)
-            )
+            asyncio.run(process_audio(audio_recorder, transcriber, processor, keyboard))
         except KeyboardInterrupt:
             console.print("Exiting...", style=Style(color="yellow"))
-        
+
     except Exception as e:
         console.print(f"Error: {e}", style=Style(color="red", bold=True))
         if verbose:
             import traceback
+
             console.print(traceback.format_exc())
         sys.exit(1)
 
