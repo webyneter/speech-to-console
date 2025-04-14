@@ -141,6 +141,8 @@ async def process_audio(
                 speech_duration=f"{speech_duration:.3f}s",
                 max_amplitude=amplitude_info.get("max_amplitude", 0),
                 amplitude_ratio=amplitude_info.get("ratio", 0),
+                amplitude_std=speech_quality.get("amplitude_std", 0),
+                amplitude_std_ratio=speech_quality.get("amplitude_std_ratio", 0),
                 text_length=len(transcription),
                 word_count=len(transcription.split()),
                 true_speech_ratio=speech_quality.get("true_speech_ratio", 0),

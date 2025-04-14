@@ -216,12 +216,18 @@ You can customize the tool behavior by modifying these files:
   - If the problem persists, try increasing the microphone volume
 - **Background noise causing false transcriptions**:
   - If you're getting transcriptions when not speaking, increase the SILENT_THRESHOLD value
-  - Try values between 100-200 depending on your environment
+  - Adjust based on your environment noise levels:
+    - For quiet environments: 100-150
+    - For normal ambient noise: 200-300
+    - For noisy environments: 400-500
   - Increase MIN_AUDIO_DURATION_SECONDS to filter out short noise bursts (try 0.7 or 1.0)
-  - The app detects and ignores very low amplitude audio
+  - The app now uses advanced speech detection that analyzes both:
+    - Amplitude (volume) of the sound
+    - Variance in amplitude (human speech has high variance, constant noise doesn't)
   - Speech is only processed between activation and deactivation phrases
   - Background noise and speech outside the activation-deactivation cycle are ignored
   - Random words that appear during silence can be eliminated by increasing MIN_AUDIO_DURATION_SECONDS
+  - Run with `--log-level DEBUG` to see detailed diagnostics about noise detection
 
 ## License
 

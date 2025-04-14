@@ -142,14 +142,21 @@ class AudioRecorder:
         # Track overall max amplitude to detect if any real speech occurred
         overall_max_amplitude = 0
         active_speech_duration = 0.0  # Track duration of active speech
+        amplitude_variance = []  # Track amplitude variance for speech detection
 
         for _ in range(max_chunks):
             data = self.record_chunk()
             frames.append(data)
 
-            # Check for silence
+            # Check for silence by analyzing amplitude
             max_amplitude = np.abs(data).max()
+            amplitude_std = np.abs(data).std()  # Standard deviation of amplitudes
+            amplitude_variance.append(amplitude_std)
             overall_max_amplitude = max(overall_max_amplitude, max_amplitude)
+
+            # Human speech has high variance in amplitude
+            # Background noise typically has low variance
+            is_likely_speech = amplitude_std > (self.silent_threshold * 0.15)
 
             if max_amplitude < self.silent_threshold:
                 silent_chunks += 1
@@ -164,16 +171,26 @@ class AudioRecorder:
                     logger.debug("Silence threshold reached, stopping recording")
                     break
             else:
-                # This is actual speech - count duration
-                chunk_duration = len(data) / self.rate  # Duration in seconds
-                active_speech_duration += chunk_duration
-                silent_chunks = 0
-                logger.debug(
-                    "Active speech detected",
-                    amplitude=float(max_amplitude),
-                    chunk_duration=f"{chunk_duration:.3f}s",
-                    active_speech_duration=f"{active_speech_duration:.3f}s",
-                )
+                # Only count as speech if it has high amplitude variance
+                if is_likely_speech:
+                    chunk_duration = len(data) / self.rate  # Duration in seconds
+                    active_speech_duration += chunk_duration
+                    silent_chunks = 0
+                    logger.debug(
+                        "Active speech detected",
+                        amplitude=float(max_amplitude),
+                        amplitude_std=float(amplitude_std),
+                        chunk_duration=f"{chunk_duration:.3f}s",
+                        active_speech_duration=f"{active_speech_duration:.3f}s",
+                    )
+                else:
+                    # Has volume but low variance - likely constant noise
+                    logger.debug(
+                        "Constant noise detected (not speech)",
+                        amplitude=float(max_amplitude),
+                        amplitude_std=float(amplitude_std),
+                        threshold=self.silent_threshold,
+                    )
 
         # Calculate true speech ratio - how much of the recording had real speech
         # This helps identify more robust speech vs. background noise
@@ -184,11 +201,23 @@ class AudioRecorder:
             else 0
         )
 
-        # If maximum amplitude was very low or the true speech ratio is too low,
+        # Calculate average amplitude variance (standard deviation)
+        avg_amplitude_std = (
+            sum(amplitude_variance) / len(amplitude_variance)
+            if amplitude_variance
+            else 0
+        )
+
+        # If maximum amplitude was too close to threshold or variance is too low,
         # this was probably just background noise or random sounds
-        if overall_max_amplitude < self.silent_threshold * 1.5 or (
-            true_speech_ratio < 0.3
-            and active_speech_duration < self.min_audio_duration_seconds * 2
+        if (
+            overall_max_amplitude < self.silent_threshold * 1.7  # Not loud enough
+            or avg_amplitude_std
+            < (self.silent_threshold * 0.1)  # Not enough variance (constant noise)
+            or (
+                true_speech_ratio < 0.5
+                and active_speech_duration < self.min_audio_duration_seconds * 2
+            )  # Not consistent speech
         ):
             # Store detailed diagnostics about why we're filtering this
             logger.debug(
@@ -199,9 +228,12 @@ class AudioRecorder:
                 active_speech_duration=f"{active_speech_duration:.3f}s",
                 total_recorded_time=f"{total_recorded_time:.3f}s",
                 true_speech_ratio=f"{true_speech_ratio:.2f}",
+                avg_std=float(avg_amplitude_std),
                 reason=(
                     "low amplitude"
-                    if overall_max_amplitude < self.silent_threshold * 1.5
+                    if overall_max_amplitude < self.silent_threshold * 1.7
+                    else "low amplitude variance"
+                    if avg_amplitude_std < (self.silent_threshold * 0.1)
                     else "insufficient speech content"
                 ),
             )
@@ -212,6 +244,10 @@ class AudioRecorder:
                 "active_speech_duration": active_speech_duration,
                 "total_recorded_time": total_recorded_time,
                 "true_speech_ratio": true_speech_ratio,
+                "amplitude_std": avg_amplitude_std,
+                "amplitude_std_ratio": avg_amplitude_std / self.silent_threshold
+                if self.silent_threshold > 0
+                else 0,
                 "is_likely_speech": False,
             }
 
@@ -241,6 +277,10 @@ class AudioRecorder:
             "active_speech_duration": active_speech_duration,
             "total_recorded_time": total_recorded_time,
             "true_speech_ratio": true_speech_ratio,
+            "amplitude_std": avg_amplitude_std,
+            "amplitude_std_ratio": avg_amplitude_std / self.silent_threshold
+            if self.silent_threshold > 0
+            else 0,
             "is_likely_speech": True,
         }
 
@@ -249,9 +289,16 @@ class AudioRecorder:
             active_speech_duration=f"{active_speech_duration:.3f}s",
             total_duration=f"{elapsed_time:.3f}s",
             max_amplitude=float(overall_max_amplitude),
+            amplitude_std=float(avg_amplitude_std),
             amplitude_ratio=(
                 f"{float(overall_max_amplitude) / self.silent_threshold:.2f}x"
-                if self.silent_threshold > 0 else "N/A"
+                if self.silent_threshold > 0
+                else "N/A"
+            ),
+            std_ratio=(
+                f"{float(avg_amplitude_std) / self.silent_threshold:.2f}x"
+                if self.silent_threshold > 0
+                else "N/A"
             ),
             meets_minimum_duration=active_speech_duration
             >= self.min_audio_duration_seconds,
