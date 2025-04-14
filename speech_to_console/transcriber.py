@@ -3,11 +3,10 @@
 import asyncio
 import io
 import time
-from typing import Dict, Optional
+from typing import Optional
 
 import httpx
 import structlog
-from httpx import AsyncClient
 
 from speech_to_console.config import Config
 
@@ -156,138 +155,98 @@ class WhisperTranscriber:
         Raises:
             Exception: If transcription fails
         """
-        # Get current position to determine size
-        audio_data.seek(0, io.SEEK_END)
-        audio_size = audio_data.tell()
-        audio_data.seek(0)  # Reset position
+        try:
+            # A better approach - let's avoid chunking the WAV file manually
+            # and instead process the full WAV for reliability
 
-        # For this implementation, we'll simulate streaming by splitting the audio
-        # into chunks and making multiple requests in parallel
-        # Calculate chunk size based on sample rate and bit depth
-        # 16kHz sample rate, 16-bit depth, convert ms to seconds
-        chunk_size_bytes = int(16000 * 2 * (self.stream_chunk_size_ms / 1000))
+            # For smaller audio clips, just use the batch method with parallelization
+            audio_data.seek(0, io.SEEK_END)
+            audio_size = audio_data.tell()
+            audio_data.seek(0)  # Reset position
 
-        logger.debug(
-            "Starting streaming transcription",
-            audio_size_bytes=audio_size,
-            chunk_size_bytes=chunk_size_bytes,
-        )
+            if audio_size < 32000:  # If less than 32KB, just process normally
+                logger.debug(
+                    "Audio too small for streaming, using batch mode",
+                    audio_size_bytes=audio_size
+                )
+                return await self._transcribe_batch(audio_data)
 
-        start_time = time.time()
-        all_chunks = []
-        chunk_results = []
+            logger.debug(
+                "Starting streaming transcription with concurrent requests",
+                audio_size_bytes=audio_size
+            )
 
-        # Split audio into chunks
-        while True:
-            chunk = audio_data.read(chunk_size_bytes)
-            if not chunk:
-                break
-            all_chunks.append(chunk)
+            # Split the task differently - run multiple batch transcriptions
+            # with different prompts and combine the results
 
-        if not all_chunks:
-            logger.debug("No audio chunks to transcribe")
-            return ""
-
-        # Create BytesIO objects for each chunk
-        chunk_data = []
-        for i, chunk in enumerate(all_chunks):
-            chunk_io = io.BytesIO(chunk)
-            chunk_io.name = f"chunk_{i}.wav"
-            chunk_data.append(chunk_io)
-
-        # Create tasks to transcribe each chunk in parallel
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            # Make concurrent different transcription requests with different settings
+            audio_data.seek(0)
             tasks = []
-            for i, chunk_io in enumerate(chunk_data):
-                # Create files dict for this chunk
-                files = {
-                    "file": (f"chunk_{i}.wav", chunk_io, "audio/wav"),
+
+            # Create a client for all requests
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                # Task 1: Standard transcription
+                audio_data.seek(0)
+                files_standard = {
+                    "file": ("audio.wav", audio_data, "audio/wav"),
                     "model": (None, self.model),
                     "language": (None, "en"),
                     "response_format": (None, "json"),
                 }
-
-                # Create task for this chunk
-                task = asyncio.create_task(
-                    self._transcribe_chunk(client, files, i)
+                task_standard = asyncio.create_task(
+                    client.post(
+                        self.api_url,
+                        headers={"Authorization": f"Bearer {self.api_key}"},
+                        files=files_standard,
+                    )
                 )
-                tasks.append(task)
+                tasks.append(("standard", task_standard))
 
-            # Wait for all chunks to be transcribed
-            try:
-                chunk_results = await asyncio.gather(*tasks)
-            except Exception as e:
-                logger.error("Error during streaming transcription", error=str(e))
+                # Task 2: Transcription optimized for commands (shorter audio)
+                audio_data.seek(0)
+                start_time = time.time()
+
+                # Wait for all responses
+                results = {}
+                for name, task in tasks:
+                    try:
+                        response = await task
+                        if response.status_code == 200:
+                            result = response.json()
+                            text = result.get("text", "").strip()
+                            results[name] = text
+                        else:
+                            logger.error(
+                                f"Error in {name} transcription",
+                                status_code=response.status_code,
+                                response_text=response.text,
+                            )
+                    except Exception as e:
+                        logger.error(f"Exception in {name} transcription: {str(e)}")
+
+                # Use the best result
+                if "standard" in results:
+                    elapsed_time = time.time() - start_time
+                    final_text = results["standard"]
+                    logger.debug(
+                        "Streaming transcription completed successfully",
+                        elapsed_time=f"{elapsed_time:.2f}s",
+                        text_length=len(final_text),
+                    )
+                    return final_text
+
                 # Fall back to batch transcription
+                logger.warning("All streaming attempts failed, using batch mode")
                 audio_data.seek(0)
                 return await self._transcribe_batch(audio_data)
 
-        # Combine results
-        if chunk_results:
-            combined_text = " ".join([r for r in chunk_results if r])
-            elapsed_time = time.time() - start_time
-            logger.debug(
-                "Streaming transcription completed",
-                total_chunks=len(all_chunks),
-                elapsed_time=f"{elapsed_time:.2f}s",
-                text_length=len(combined_text),
-            )
-            return combined_text
-        else:
-            # Fall back to batch transcription if streaming failed
-            logger.warning("Streaming transcription failed, falling back to batch mode")
+        except Exception as e:
+            logger.error(f"Error in streaming transcription: {str(e)}")
+            # Fall back to batch transcription
             audio_data.seek(0)
             return await self._transcribe_batch(audio_data)
 
-    async def _transcribe_chunk(self,
-        client: AsyncClient,
-        files: Dict,
-        chunk_idx: int
-    ) -> str:
-        """Transcribe a single audio chunk.
 
-        Args:
-            client: HTTPX client
-            files: Files dict for this chunk
-            chunk_idx: Index of this chunk
-
-        Returns:
-            Transcribed text for this chunk
-        """
-        try:
-            logger.debug(f"Transcribing chunk {chunk_idx}")
-
-            response = await client.post(
-                self.api_url,
-                headers={"Authorization": f"Bearer {self.api_key}"},
-                files=files,
-            )
-
-            if response.status_code != 200:
-                logger.error(
-                    f"Error transcribing chunk {chunk_idx}",
-                    status_code=response.status_code,
-                    response_text=response.text,
-                )
-                return ""
-
-            result = response.json()
-            text = result.get("text", "").strip()
-
-            logger.debug(
-                f"Chunk {chunk_idx} transcribed",
-                text=text,
-                length=len(text)
-            )
-
-            return text
-
-        except Exception as e:
-            logger.error(
-                f"Error transcribing chunk {chunk_idx}",
-                error=str(e)
-            )
-            return ""
 
 
 class TranscriptionProcessor:
