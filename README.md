@@ -18,8 +18,11 @@ A tool that converts spoken commands to console/terminal operations using real-t
 git clone https://github.com/yourusername/speech-to-console.git
 cd speech-to-console
 
-# Install with uv
+# Install with uv (runtime dependencies only)
 uv sync
+
+# Install with uv (including development dependencies)
+uv sync --all-groups
 
 # Or install with pip
 pip install -e .
@@ -83,16 +86,16 @@ When you run the tool, it listens continuously for the activation phrase. Once d
 
 ```bash
 # Install development dependencies
-uv sync
+uv sync --all-groups
 
 # Run tests
-pytest
+uv run pytest
 
 # Run linting
-ruff check .
+uv run ruff check .
 
 # Format code
-ruff format .
+uv run ruff format .
 ```
 
 ### Customization
