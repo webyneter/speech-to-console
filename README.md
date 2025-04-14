@@ -23,9 +23,6 @@ uv sync
 
 # Install with uv (including development dependencies)
 uv sync --all-groups
-
-# Or install with pip
-pip install -e .
 ```
 
 ## Install the Package as a CLI
