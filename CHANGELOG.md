@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.5] - 2025-04-14
+
+### Fixed
+- Fix changelog rendering in GitHub releases
+
+### Changed
+- Release v0.3.4
+
+
 ## [0.3.4] - 2025-04-14
 
 ### Changed
@@ -177,7 +186,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adjusted audio sensitivity settings for different environments
 - Updated activation phrase to be more distinctive and reliable
 
-[Unreleased]: https://github.com/webyneter/speech-to-console/compare/v0.3.3...HEAD
+[Unreleased]: https://github.com/webyneter/speech-to-console/compare/v0.3.5...HEAD
+[0.3.5]: https://github.com/webyneter/speech-to-console/compare/v0.3.3...v0.3.5
 [0.3.3]: https://github.com/webyneter/speech-to-console/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/webyneter/speech-to-console/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/webyneter/speech-to-console/compare/v0.3.0...v0.3.1
