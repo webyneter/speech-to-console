@@ -14,10 +14,6 @@ A tool that converts spoken commands to console/terminal operations using real-t
 ### Basic Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/speech-to-console.git
-cd speech-to-console
-
 # Install with uv (runtime dependencies only)
 uv sync
 
@@ -131,10 +127,39 @@ When you run the tool, it listens continuously for the activation phrase. Once d
 
 ## Development
 
-```bash
-# Install development dependencies
-uv sync --all-groups
+### Prerequisites
 
+- Python 3.10 (required for PyAutoGUI compatibility)
+- [uv](https://github.com/astral-sh/uv) package manager
+- System dependencies (audio libraries, etc.) - can be installed with `./install_dependencies.sh`
+
+### Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/speech-to-console.git
+cd speech-to-console
+
+# Sync dependencies (runtime only)
+uv sync
+
+# Sync all dependencies (including development)
+uv sync --all-groups
+```
+
+### Running Locally
+
+```bash
+# Run directly from source
+uv run speech-to-console
+
+# Run with verbose logging
+uv run speech-to-console --log-level DEBUG
+```
+
+### Testing and Code Quality
+
+```bash
 # Run tests
 uv run pytest
 
