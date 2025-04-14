@@ -28,7 +28,7 @@ class Config(BaseModel):
 
     # Audio settings
     silent_threshold: int = Field(
-        100, description="Threshold for silence detection (lower = more sensitive)"
+        350, description="Threshold for silence detection (lower = more sensitive)"
     )
 
     # Transcription filtering
@@ -56,7 +56,7 @@ def load_config() -> Config:
     whisper_model = os.getenv("WHISPER_MODEL", "whisper-1")
     api_timeout = int(os.getenv("API_TIMEOUT", "10"))
     log_level = os.getenv("LOG_LEVEL", "INFO")
-    silent_threshold = int(os.getenv("SILENT_THRESHOLD", "50"))
+    silent_threshold = int(os.getenv("SILENT_THRESHOLD", "350"))
     min_audio_duration_seconds = float(os.getenv("MIN_AUDIO_DURATION_SECONDS", "0.5"))
     use_streaming = os.getenv("USE_STREAMING", "True").lower() == "true"
     stream_chunk_size_ms = int(os.getenv("STREAM_CHUNK_SIZE_MS", "500"))

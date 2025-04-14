@@ -14,7 +14,7 @@ def audio_recorder():
     return AudioRecorder(
         rate=16000,
         channels=1,
-        silent_threshold=100,
+        silent_threshold=350,
         min_audio_duration_seconds=0.5,
     )
 
@@ -24,13 +24,13 @@ def test_initialization():
     recorder = AudioRecorder(
         rate=16000,
         channels=1,
-        silent_threshold=100,
+        silent_threshold=350,
         min_audio_duration_seconds=0.5,
     )
 
     assert recorder.rate == 16000
     assert recorder.channels == 1
-    assert recorder.silent_threshold == 100
+    assert recorder.silent_threshold == 350
     assert recorder.min_audio_duration_seconds == 0.5
     assert recorder.is_recording is False
     assert recorder.stream is None

@@ -127,7 +127,7 @@ OPENAI_API_KEY=your-api-key-here
 
 # Optional settings with defaults shown:
 LOG_LEVEL=INFO                    # Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-SILENT_THRESHOLD=400              # Microphone sensitivity (lower = more sensitive)
+SILENT_THRESHOLD=750              # Microphone sensitivity (lower = more sensitive)
 MIN_AUDIO_DURATION_SECONDS=0.5    # Minimum audio duration to process
 USE_STREAMING=true                # Use streaming for more responsive transcription
 STREAM_CHUNK_SIZE_MS=500          # Size of audio chunks for streaming (milliseconds)
@@ -137,9 +137,9 @@ STREAM_CHUNK_SIZE_MS=500          # Size of audio chunks for streaming (millisec
 
 | Environment    | Recommended SILENT_THRESHOLD |
 |----------------|------------------------------|
-| Quiet          | 100-150                      |
-| Normal ambient | 200-300                      |
-| Noisy          | 400-500                      |
+| Quiet          | 100-350                      |
+| Normal ambient | 350-750                      |
+| Noisy          | 750-1000                     |
 
 ## 🚀 Usage
 
