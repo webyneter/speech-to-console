@@ -4,10 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build and Test Commands
 - Install dependencies: `uv sync`
-- Run all tests: `uv pytest`
-- Linting and formatting: `uv ruff check --fix .`
+- Run all tests: `uv run pytest`
+- Linting and formatting: `uv run ruff check --fix .`
 - Overall, any commands targeting the Python codebase must be run via `uv` 
-- Launch CLI locally: `python -m speech_to_console [COMMAND]` or `speech-to-console [COMMAND]`
+- Launch CLI locally: `uv run speech-to-console`
+- Launch CLI locally with the specified log level: `uv run speech-to-console --log-level DEBUG`
 
 ## Code Style Guidelines
 - Python version: 3.10
