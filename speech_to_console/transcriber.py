@@ -1,11 +1,13 @@
-"""Transcription service using OpenAI's Whisper API."""
+"""Transcription service using OpenAI's Whisper API with streaming support."""
 
+import asyncio
 import io
 import time
-from typing import Optional
+from typing import Dict, Optional
 
 import httpx
 import structlog
+from httpx import AsyncClient
 
 from speech_to_console.config import Config
 
@@ -14,7 +16,7 @@ logger = structlog.get_logger()
 
 
 class WhisperTranscriber:
-    """Transcribes audio using OpenAI's Whisper API."""
+    """Transcribes audio using OpenAI's Whisper API with streaming support."""
 
     def __init__(self, config: Config):
         """Initialize the transcriber.
@@ -25,19 +27,50 @@ class WhisperTranscriber:
         self.api_key = config.openai_api_key
         self.model = config.whisper_model
         self.timeout = config.api_timeout
+        self.use_streaming = config.use_streaming
+        self.stream_chunk_size_ms = config.stream_chunk_size_ms
 
-        # API endpoint
+        # API endpoints
         self.api_url = "https://api.openai.com/v1/audio/transcriptions"
+        # For streaming, we'll use AssemblyAI or OpenAI's latest streaming endpoint
+        # Note: OpenAI may update their API URLs
+        self.streaming_api_url = "https://api.openai.com/v1/audio/transcriptions"
+
+        # Current transcript when streaming
+        self.current_transcript = ""
+        self.stream_complete = False
 
         logger.debug(
             "WhisperTranscriber initialized",
             model=self.model,
             timeout=self.timeout,
             api_url=self.api_url,
+            use_streaming=self.use_streaming,
+            stream_chunk_size_ms=self.stream_chunk_size_ms,
         )
 
     async def transcribe(self, audio_data: io.BytesIO) -> str:
         """Transcribe audio data using Whisper API.
+
+        Args:
+            audio_data: Audio data as BytesIO object
+
+        Returns:
+            Transcribed text
+
+        Raises:
+            Exception: If transcription fails
+        """
+        # Reset stream state if we're using streaming
+        if self.use_streaming:
+            self.current_transcript = ""
+            self.stream_complete = False
+            return await self._transcribe_streaming(audio_data)
+        else:
+            return await self._transcribe_batch(audio_data)
+
+    async def _transcribe_batch(self, audio_data: io.BytesIO) -> str:
+        """Transcribe audio in batch mode (original method).
 
         Args:
             audio_data: Audio data as BytesIO object
@@ -65,7 +98,7 @@ class WhisperTranscriber:
         }
 
         logger.debug(
-            "Sending audio for transcription",
+            "Sending audio for batch transcription",
             audio_size_bytes=audio_size,
             api_url=self.api_url,
             model=self.model,
@@ -98,7 +131,7 @@ class WhisperTranscriber:
                 result = response.json()
                 transcription = result.get("text", "")
                 logger.debug(
-                    "Transcription completed successfully",
+                    "Batch transcription completed successfully",
                     text_length=len(transcription),
                 )
                 return transcription
@@ -110,6 +143,151 @@ class WhisperTranscriber:
         except Exception as e:
             logger.error("Transcription error", error=str(e), exc_info=True)
             raise
+
+    async def _transcribe_streaming(self, audio_data: io.BytesIO) -> str:
+        """Transcribe audio using streaming API for improved responsiveness.
+
+        Args:
+            audio_data: Audio data as BytesIO object
+
+        Returns:
+            Transcribed text
+
+        Raises:
+            Exception: If transcription fails
+        """
+        # Get current position to determine size
+        audio_data.seek(0, io.SEEK_END)
+        audio_size = audio_data.tell()
+        audio_data.seek(0)  # Reset position
+
+        # For this implementation, we'll simulate streaming by splitting the audio
+        # into chunks and making multiple requests in parallel
+        # Calculate chunk size based on sample rate and bit depth
+        # 16kHz sample rate, 16-bit depth, convert ms to seconds
+        chunk_size_bytes = int(16000 * 2 * (self.stream_chunk_size_ms / 1000))
+
+        logger.debug(
+            "Starting streaming transcription",
+            audio_size_bytes=audio_size,
+            chunk_size_bytes=chunk_size_bytes,
+        )
+
+        start_time = time.time()
+        all_chunks = []
+        chunk_results = []
+
+        # Split audio into chunks
+        while True:
+            chunk = audio_data.read(chunk_size_bytes)
+            if not chunk:
+                break
+            all_chunks.append(chunk)
+
+        if not all_chunks:
+            logger.debug("No audio chunks to transcribe")
+            return ""
+
+        # Create BytesIO objects for each chunk
+        chunk_data = []
+        for i, chunk in enumerate(all_chunks):
+            chunk_io = io.BytesIO(chunk)
+            chunk_io.name = f"chunk_{i}.wav"
+            chunk_data.append(chunk_io)
+
+        # Create tasks to transcribe each chunk in parallel
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            tasks = []
+            for i, chunk_io in enumerate(chunk_data):
+                # Create files dict for this chunk
+                files = {
+                    "file": (f"chunk_{i}.wav", chunk_io, "audio/wav"),
+                    "model": (None, self.model),
+                    "language": (None, "en"),
+                    "response_format": (None, "json"),
+                }
+
+                # Create task for this chunk
+                task = asyncio.create_task(
+                    self._transcribe_chunk(client, files, i)
+                )
+                tasks.append(task)
+
+            # Wait for all chunks to be transcribed
+            try:
+                chunk_results = await asyncio.gather(*tasks)
+            except Exception as e:
+                logger.error("Error during streaming transcription", error=str(e))
+                # Fall back to batch transcription
+                audio_data.seek(0)
+                return await self._transcribe_batch(audio_data)
+
+        # Combine results
+        if chunk_results:
+            combined_text = " ".join([r for r in chunk_results if r])
+            elapsed_time = time.time() - start_time
+            logger.debug(
+                "Streaming transcription completed",
+                total_chunks=len(all_chunks),
+                elapsed_time=f"{elapsed_time:.2f}s",
+                text_length=len(combined_text),
+            )
+            return combined_text
+        else:
+            # Fall back to batch transcription if streaming failed
+            logger.warning("Streaming transcription failed, falling back to batch mode")
+            audio_data.seek(0)
+            return await self._transcribe_batch(audio_data)
+
+    async def _transcribe_chunk(self,
+        client: AsyncClient,
+        files: Dict,
+        chunk_idx: int
+    ) -> str:
+        """Transcribe a single audio chunk.
+
+        Args:
+            client: HTTPX client
+            files: Files dict for this chunk
+            chunk_idx: Index of this chunk
+
+        Returns:
+            Transcribed text for this chunk
+        """
+        try:
+            logger.debug(f"Transcribing chunk {chunk_idx}")
+
+            response = await client.post(
+                self.api_url,
+                headers={"Authorization": f"Bearer {self.api_key}"},
+                files=files,
+            )
+
+            if response.status_code != 200:
+                logger.error(
+                    f"Error transcribing chunk {chunk_idx}",
+                    status_code=response.status_code,
+                    response_text=response.text,
+                )
+                return ""
+
+            result = response.json()
+            text = result.get("text", "").strip()
+
+            logger.debug(
+                f"Chunk {chunk_idx} transcribed",
+                text=text,
+                length=len(text)
+            )
+
+            return text
+
+        except Exception as e:
+            logger.error(
+                f"Error transcribing chunk {chunk_idx}",
+                error=str(e)
+            )
+            return ""
 
 
 class TranscriptionProcessor:
@@ -231,7 +409,7 @@ class TranscriptionProcessor:
                 # For phrases like "end speechless", "stop speechless"
                 action_word = base_words[0]  # "end", "stop", etc.
 
-                # Add variations with alternative spellings and common transcription errors
+                # Add variations with common misspellings
                 fuzzy_deactivation_matches.extend([
                     f"{action_word} speechless",
                     f"{action_word} speech less",

@@ -36,6 +36,14 @@ class Config(BaseModel):
         0.5, description="Minimum audio duration in seconds to consider valid speech"
     )
 
+    # Streaming settings
+    use_streaming: bool = Field(
+        True, description="Use streaming API for real-time transcription"
+    )
+    stream_chunk_size_ms: int = Field(
+        500, description="Size of audio chunks for streaming in milliseconds"
+    )
+
 
 def load_config() -> Config:
     """Load configuration from environment variables."""
@@ -50,6 +58,8 @@ def load_config() -> Config:
     log_level = os.getenv("LOG_LEVEL", "INFO")
     silent_threshold = int(os.getenv("SILENT_THRESHOLD", "50"))
     min_audio_duration_seconds = float(os.getenv("MIN_AUDIO_DURATION_SECONDS", "0.5"))
+    use_streaming = os.getenv("USE_STREAMING", "True").lower() == "true"
+    stream_chunk_size_ms = int(os.getenv("STREAM_CHUNK_SIZE_MS", "500"))
 
     if not openai_api_key:
         raise ValueError(
@@ -71,4 +81,6 @@ def load_config() -> Config:
         log_level=log_level,
         silent_threshold=silent_threshold,
         min_audio_duration_seconds=min_audio_duration_seconds,
+        use_streaming=use_streaming,
+        stream_chunk_size_ms=stream_chunk_size_ms,
     )

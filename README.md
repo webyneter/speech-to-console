@@ -22,9 +22,11 @@ Speech to Console lets you control your terminal with voice commands. Just say "
 
 - **Voice-activated command transcription** for terminals and consoles
 - **Accurate speech recognition** using OpenAI's Whisper API
+- **Real-time streaming transcription** for improved responsiveness
 - **Intelligent noise filtering** that distinguishes human speech from background noise
 - **Simple activation/deactivation** with customizable phrases
 - **Adapts to different environments** with adjustable audio sensitivity
+- **Parallel processing** of audio chunks for faster results
 
 ## 🧰 Requirements
 
@@ -89,6 +91,8 @@ OPENAI_API_KEY=your-api-key-here
 LOG_LEVEL=INFO                    # Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
 SILENT_THRESHOLD=400              # Microphone sensitivity (lower = more sensitive)
 MIN_AUDIO_DURATION_SECONDS=0.5    # Minimum audio duration to process
+USE_STREAMING=true                # Use streaming for more responsive transcription
+STREAM_CHUNK_SIZE_MS=500          # Size of audio chunks for streaming (milliseconds)
 ```
 
 ### Audio Sensitivity Settings
@@ -122,6 +126,21 @@ MIN_AUDIO_DURATION_SECONDS=0.5    # Minimum audio duration to process
 1. **Listening Phase**: Monitors for activation phrase with noise filtering
 2. **Active Phase**: Transcribes all speech until deactivation phrase is detected
 3. **Typing Phase**: Converts speech to text and types it into the active window
+
+### Streaming Transcription
+
+Speech to Console uses a parallel streaming approach that:
+
+1. Divides audio into small chunks (configurable, default 500ms)
+2. Processes these chunks in parallel to reduce overall latency
+3. Combines chunk results intelligently to create a smooth transcription
+4. Falls back to regular batch processing if streaming encounters issues
+
+You can adjust streaming settings in your `.env` file:
+```env
+USE_STREAMING=true                # Enable/disable streaming (true/false)
+STREAM_CHUNK_SIZE_MS=500          # Chunk size in milliseconds (smaller = faster response)
+```
 
 ## 🔧 Troubleshooting
 

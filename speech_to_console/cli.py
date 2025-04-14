@@ -212,7 +212,7 @@ async def process_audio(
                         "⛔ Deactivated. Listening for activation phrase...",
                         style=Style(color="red", bold=True),
                     )
-                    # Force a short pause to ensure we don't immediately process next chunk
+                    # Add delay to prevent immediate reprocessing
                     await asyncio.sleep(0.5)
                     continue
 
@@ -305,7 +305,12 @@ def main(
             min_audio_duration_seconds=config.min_audio_duration_seconds,
         )
 
-        logger.debug("Initializing transcriber", model=config.whisper_model)
+        logger.debug(
+            "Initializing transcriber",
+            model=config.whisper_model,
+            use_streaming=config.use_streaming,
+            stream_chunk_size_ms=config.stream_chunk_size_ms
+        )
         transcriber = WhisperTranscriber(config)
 
         logger.debug(
