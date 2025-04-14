@@ -175,15 +175,45 @@ class AudioRecorder:
                     active_speech_duration=f"{active_speech_duration:.3f}s",
                 )
 
-        # If maximum amplitude was very low, this was probably just background noise
-        if overall_max_amplitude < self.silent_threshold * 1.5:
+        # Calculate true speech ratio - how much of the recording had real speech
+        # This helps identify more robust speech vs. background noise
+        total_recorded_time = len(frames) * (self.blocksize / self.rate)
+        true_speech_ratio = (
+            active_speech_duration / total_recorded_time
+            if total_recorded_time > 0
+            else 0
+        )
+
+        # If maximum amplitude was very low or the true speech ratio is too low,
+        # this was probably just background noise or random sounds
+        if overall_max_amplitude < self.silent_threshold * 1.5 or (
+            true_speech_ratio < 0.3
+            and active_speech_duration < self.min_audio_duration_seconds * 2
+        ):
+            # Store detailed diagnostics about why we're filtering this
             logger.debug(
-                "Very low amplitude audio detected, likely just background noise",
+                "Filtering out likely background noise or random sounds",
                 overall_max_amplitude=float(overall_max_amplitude),
                 threshold=self.silent_threshold,
+                ratio=f"{float(overall_max_amplitude) / self.silent_threshold:.2f}x",
+                active_speech_duration=f"{active_speech_duration:.3f}s",
+                total_recorded_time=f"{total_recorded_time:.3f}s",
+                true_speech_ratio=f"{true_speech_ratio:.2f}",
+                reason=(
+                    "low amplitude"
+                    if overall_max_amplitude < self.silent_threshold * 1.5
+                    else "insufficient speech content"
+                ),
             )
+
             # Store the speech duration in our metadata dictionary
             self.last_recording_metadata["active_speech_duration"] = 0.0
+            self.last_recording_metadata["speech_quality"] = {
+                "active_speech_duration": active_speech_duration,
+                "total_recorded_time": total_recorded_time,
+                "true_speech_ratio": true_speech_ratio,
+                "is_likely_speech": False,
+            }
 
             # Return empty frames to avoid processing background noise
             if len(frames) > 0:
@@ -198,13 +228,31 @@ class AudioRecorder:
         elapsed_time = time.time() - start_time
         result = np.concatenate(frames)
 
-        # Store the speech duration in our metadata dictionary
+        # Store the speech duration and quality metrics in our metadata dictionary
         self.last_recording_metadata["active_speech_duration"] = active_speech_duration
+        self.last_recording_metadata["amplitude_info"] = {
+            "max_amplitude": float(overall_max_amplitude),
+            "threshold": self.silent_threshold,
+            "ratio": float(overall_max_amplitude) / self.silent_threshold
+            if self.silent_threshold > 0
+            else 0,
+        }
+        self.last_recording_metadata["speech_quality"] = {
+            "active_speech_duration": active_speech_duration,
+            "total_recorded_time": total_recorded_time,
+            "true_speech_ratio": true_speech_ratio,
+            "is_likely_speech": True,
+        }
 
         logger.debug(
             "Recorded audio with speech duration",
             active_speech_duration=f"{active_speech_duration:.3f}s",
             total_duration=f"{elapsed_time:.3f}s",
+            max_amplitude=float(overall_max_amplitude),
+            amplitude_ratio=(
+                f"{float(overall_max_amplitude) / self.silent_threshold:.2f}x"
+                if self.silent_threshold > 0 else "N/A"
+            ),
             meets_minimum_duration=active_speech_duration
             >= self.min_audio_duration_seconds,
         )

@@ -79,15 +79,31 @@ async def process_audio(
                 "active_speech_duration", 0.0
             )
 
-            # Skip processing if speech duration is too short (non-active state only)
-            if (
-                not is_active
-                and speech_duration < audio_recorder.min_audio_duration_seconds
+            # Get audio quality information
+            speech_quality = audio_recorder.last_recording_metadata.get(
+                "speech_quality", {}
+            )
+            is_likely_speech = speech_quality.get("is_likely_speech", False)
+
+            # Skip processing if audio doesn't meet quality criteria
+            # (only when not in active mode)
+            if not is_active and (
+                speech_duration < audio_recorder.min_audio_duration_seconds
+                or not is_likely_speech
             ):
+                reason = (
+                    "insufficient duration"
+                    if speech_duration < audio_recorder.min_audio_duration_seconds
+                    else "poor speech quality"
+                )
+
                 logger.debug(
-                    "Skipping audio with insufficient speech duration",
+                    "Skipping audio that doesn't meet quality criteria",
+                    reason=reason,
                     speech_duration=f"{speech_duration:.3f}s",
                     required_duration=f"{audio_recorder.min_audio_duration_seconds:.3f}s",
+                    true_speech_ratio=speech_quality.get("true_speech_ratio", 0),
+                    is_likely_speech=is_likely_speech,
                 )
                 await asyncio.sleep(0.1)
                 continue
@@ -109,11 +125,26 @@ async def process_audio(
                 logger.debug("Empty transcription received, continuing")
                 continue
 
+            # Get audio quality information from the last recording
+            amplitude_info = audio_recorder.last_recording_metadata.get(
+                "amplitude_info", {}
+            )
+            speech_quality = audio_recorder.last_recording_metadata.get(
+                "speech_quality", {}
+            )
+
             logger.debug(
                 "Transcription received",
                 raw_text=transcription,
                 is_active=is_active,
                 in_valid_cycle=in_valid_cycle,
+                speech_duration=f"{speech_duration:.3f}s",
+                max_amplitude=amplitude_info.get("max_amplitude", 0),
+                amplitude_ratio=amplitude_info.get("ratio", 0),
+                text_length=len(transcription),
+                word_count=len(transcription.split()),
+                true_speech_ratio=speech_quality.get("true_speech_ratio", 0),
+                is_likely_speech=speech_quality.get("is_likely_speech", False),
             )
 
             # Check for activation phrase - always do this
@@ -150,8 +181,13 @@ async def process_audio(
             if not in_valid_cycle:
                 # Only show occasional feedback when listening for activation
                 if not is_active:
+                    # Add an indicator if this is likely background noise
+                    quality_note = ""
+                    if not is_likely_speech:
+                        quality_note = " (likely background noise)"
+
                     console.print(
-                        f"👂 Listening... (Heard: '{transcription}')",
+                        f"👂 Listening... (Heard: '{transcription}'{quality_note})",
                         style=Style(color="blue", dim=True),
                     )
                 continue
