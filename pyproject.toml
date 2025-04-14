@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "speech-to-console"
-version = "0.1.0"
+version = "0.2.2"
 description = "Convert spoken commands to console operations"
 requires-python = "==3.10.*"
 authors = [
