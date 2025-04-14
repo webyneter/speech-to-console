@@ -74,8 +74,10 @@ async def process_audio(
                 await asyncio.sleep(0.1)  # Short sleep to avoid CPU spinning
                 continue
 
-            # Get speech duration from the audio data object
-            speech_duration = getattr(audio_data, "active_speech_duration", 0.0)
+            # Get speech duration from the recorder's metadata dictionary
+            speech_duration = audio_recorder.last_recording_metadata.get(
+                "active_speech_duration", 0.0
+            )
 
             # Skip processing if speech duration is too short (non-active state only)
             if (

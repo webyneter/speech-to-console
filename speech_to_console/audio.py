@@ -36,6 +36,8 @@ class AudioRecorder:
             silent_threshold: Threshold for silence detection (lower = more sensitive)
             min_audio_duration_seconds: Minimum duration for valid speech detection
         """
+        # Keep a dictionary of audio metadata for the last recorded audio
+        self.last_recording_metadata = {"active_speech_duration": 0.0}
         self.rate = rate
         self.channels = channels
         self.dtype = dtype
@@ -180,25 +182,24 @@ class AudioRecorder:
                 overall_max_amplitude=float(overall_max_amplitude),
                 threshold=self.silent_threshold,
             )
+            # Store the speech duration in our metadata dictionary
+            self.last_recording_metadata["active_speech_duration"] = 0.0
+
             # Return empty frames to avoid processing background noise
             if len(frames) > 0:
                 # Return the same shape but with zeros
                 result = np.zeros_like(np.concatenate(frames))
-                # Store the speech duration as metadata
-                result.active_speech_duration = 0.0
                 return result
             else:
                 # Return empty array if no frames
                 result = np.zeros(1, dtype=np.int16)
-                # Store the speech duration as metadata
-                result.active_speech_duration = 0.0
                 return result
 
         elapsed_time = time.time() - start_time
         result = np.concatenate(frames)
 
-        # Store the speech duration as metadata
-        result.active_speech_duration = active_speech_duration
+        # Store the speech duration in our metadata dictionary
+        self.last_recording_metadata["active_speech_duration"] = active_speech_duration
 
         logger.debug(
             "Recorded audio with speech duration",
