@@ -74,6 +74,22 @@ async def process_audio(
                 await asyncio.sleep(0.1)  # Short sleep to avoid CPU spinning
                 continue
 
+            # Get speech duration from the audio data object
+            speech_duration = getattr(audio_data, "active_speech_duration", 0.0)
+
+            # Skip processing if speech duration is too short (non-active state only)
+            if (
+                not is_active
+                and speech_duration < audio_recorder.min_audio_duration_seconds
+            ):
+                logger.debug(
+                    "Skipping audio with insufficient speech duration",
+                    speech_duration=f"{speech_duration:.3f}s",
+                    required_duration=f"{audio_recorder.min_audio_duration_seconds:.3f}s",
+                )
+                await asyncio.sleep(0.1)
+                continue
+
             # Convert to bytes IO for API submission
             audio_bytes = audio_recorder.audio_to_bytes_io(audio_data)
             logger.debug(
@@ -235,9 +251,14 @@ def main(
 
         # Initialize components
         logger.debug(
-            "Initializing audio recorder", silent_threshold=config.silent_threshold
+            "Initializing audio recorder",
+            silent_threshold=config.silent_threshold,
+            min_audio_duration_seconds=config.min_audio_duration_seconds,
         )
-        audio_recorder = AudioRecorder(silent_threshold=config.silent_threshold)
+        audio_recorder = AudioRecorder(
+            silent_threshold=config.silent_threshold,
+            min_audio_duration_seconds=config.min_audio_duration_seconds,
+        )
 
         logger.debug("Initializing transcriber", model=config.whisper_model)
         transcriber = WhisperTranscriber(config)

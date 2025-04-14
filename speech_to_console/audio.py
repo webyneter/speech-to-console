@@ -24,6 +24,7 @@ class AudioRecorder:
         dtype: str = "int16",
         blocksize: int = 1024,
         silent_threshold: int = 50,
+        min_audio_duration_seconds: float = 0.5,
     ):
         """Initialize the audio recorder.
 
@@ -33,6 +34,7 @@ class AudioRecorder:
             dtype: Data type for audio samples
             blocksize: Block size for audio processing
             silent_threshold: Threshold for silence detection (lower = more sensitive)
+            min_audio_duration_seconds: Minimum duration for valid speech detection
         """
         self.rate = rate
         self.channels = channels
@@ -41,6 +43,7 @@ class AudioRecorder:
         self.is_recording = False
         self.stream = None
         self.silent_threshold = silent_threshold  # From config or default
+        self.min_audio_duration_seconds = min_audio_duration_seconds
 
         # Format mapping for wave module
         self.format_map = {
@@ -136,6 +139,7 @@ class AudioRecorder:
 
         # Track overall max amplitude to detect if any real speech occurred
         overall_max_amplitude = 0
+        active_speech_duration = 0.0  # Track duration of active speech
 
         for _ in range(max_chunks):
             data = self.record_chunk()
@@ -158,7 +162,16 @@ class AudioRecorder:
                     logger.debug("Silence threshold reached, stopping recording")
                     break
             else:
+                # This is actual speech - count duration
+                chunk_duration = len(data) / self.rate  # Duration in seconds
+                active_speech_duration += chunk_duration
                 silent_chunks = 0
+                logger.debug(
+                    "Active speech detected",
+                    amplitude=float(max_amplitude),
+                    chunk_duration=f"{chunk_duration:.3f}s",
+                    active_speech_duration=f"{active_speech_duration:.3f}s",
+                )
 
         # If maximum amplitude was very low, this was probably just background noise
         if overall_max_amplitude < self.silent_threshold * 1.5:
@@ -171,13 +184,29 @@ class AudioRecorder:
             if len(frames) > 0:
                 # Return the same shape but with zeros
                 result = np.zeros_like(np.concatenate(frames))
+                # Store the speech duration as metadata
+                result.active_speech_duration = 0.0
                 return result
             else:
                 # Return empty array if no frames
-                return np.zeros(1, dtype=np.int16)
+                result = np.zeros(1, dtype=np.int16)
+                # Store the speech duration as metadata
+                result.active_speech_duration = 0.0
+                return result
 
         elapsed_time = time.time() - start_time
         result = np.concatenate(frames)
+
+        # Store the speech duration as metadata
+        result.active_speech_duration = active_speech_duration
+
+        logger.debug(
+            "Recorded audio with speech duration",
+            active_speech_duration=f"{active_speech_duration:.3f}s",
+            total_duration=f"{elapsed_time:.3f}s",
+            meets_minimum_duration=active_speech_duration
+            >= self.min_audio_duration_seconds,
+        )
 
         logger.debug(
             "Recording completed",

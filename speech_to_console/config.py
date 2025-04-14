@@ -31,6 +31,11 @@ class Config(BaseModel):
         100, description="Threshold for silence detection (lower = more sensitive)"
     )
 
+    # Transcription filtering
+    min_audio_duration_seconds: float = Field(
+        0.5, description="Minimum audio duration in seconds to consider valid speech"
+    )
+
 
 def load_config() -> Config:
     """Load configuration from environment variables."""
@@ -44,6 +49,7 @@ def load_config() -> Config:
     api_timeout = int(os.getenv("API_TIMEOUT", "10"))
     log_level = os.getenv("LOG_LEVEL", "INFO")
     silent_threshold = int(os.getenv("SILENT_THRESHOLD", "50"))
+    min_audio_duration_seconds = float(os.getenv("MIN_AUDIO_DURATION_SECONDS", "0.5"))
 
     if not openai_api_key:
         raise ValueError(
@@ -64,4 +70,5 @@ def load_config() -> Config:
         api_timeout=api_timeout,
         log_level=log_level,
         silent_threshold=silent_threshold,
+        min_audio_duration_seconds=min_audio_duration_seconds,
     )

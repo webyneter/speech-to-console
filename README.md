@@ -98,6 +98,11 @@ LOG_LEVEL=INFO
 # Higher values = less sensitive (requires louder speech)
 # If you're getting false transcriptions from background noise, try 150-200
 SILENT_THRESHOLD=100
+
+# Optional: Minimum speech duration in seconds (default is 0.5)
+# Increase this to filter out false transcriptions from background noise
+# Try 0.7 or 1.0 if you're still getting false transcriptions
+MIN_AUDIO_DURATION_SECONDS=0.5
 ```
 
 Available logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
@@ -212,9 +217,11 @@ You can customize the tool behavior by modifying these files:
 - **Background noise causing false transcriptions**:
   - If you're getting transcriptions when not speaking, increase the SILENT_THRESHOLD value
   - Try values between 100-200 depending on your environment
-  - The app now detects and ignores very low amplitude audio
+  - Increase MIN_AUDIO_DURATION_SECONDS to filter out short noise bursts (try 0.7 or 1.0)
+  - The app detects and ignores very low amplitude audio
   - Speech is only processed between activation and deactivation phrases
   - Background noise and speech outside the activation-deactivation cycle are ignored
+  - Random words that appear during silence can be eliminated by increasing MIN_AUDIO_DURATION_SECONDS
 
 ## License
 
