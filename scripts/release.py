@@ -220,6 +220,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     return True
 
 
+def update_lockfile(repo_root):
+    """Update the uv.lock file"""
+    print("Updating uv.lock file...")
+    try:
+        result = subprocess.run(
+            ["uv", "lock"],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        print(result.stdout.strip())
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"Error updating lockfile: {e}")
+        print(e.stderr)
+        return False
+
+
 def git_commands(new_version, files_to_commit):
     """Run git commands to commit changes and create a tag"""
     commands = [
@@ -277,6 +296,7 @@ def main():
         print(f"Would update pyproject.toml version from {current_version} to {new_version}")
         print(f"Would update __init__.py version from {current_version} to {new_version}")
         print(f"Would generate changelog entries in {changelog_path}")
+        print(f"Would update uv.lock file")
         print(f"Would commit changes and create tag v{new_version}")
         return
     
@@ -284,9 +304,11 @@ def main():
     update_pyproject_version(pyproject_path, new_version)
     update_init_version(repo_root, new_version)
     generate_changelog(changelog_path, new_version)
+    update_lockfile(repo_root)
     
     init_path = os.path.join(repo_root, "speech_to_console", "__init__.py")
-    files_to_commit = [pyproject_path, changelog_path, init_path]
+    lock_path = os.path.join(repo_root, "uv.lock")
+    files_to_commit = [pyproject_path, changelog_path, init_path, lock_path]
     
     # Git operations
     if not args.no_git:
