@@ -167,13 +167,13 @@ class WhisperTranscriber:
             if audio_size < 32000:  # If less than 32KB, just process normally
                 logger.debug(
                     "Audio too small for streaming, using batch mode",
-                    audio_size_bytes=audio_size
+                    audio_size_bytes=audio_size,
                 )
                 return await self._transcribe_batch(audio_data)
 
             logger.debug(
                 "Starting streaming transcription with concurrent requests",
-                audio_size_bytes=audio_size
+                audio_size_bytes=audio_size,
             )
 
             # Split the task differently - run multiple batch transcriptions
@@ -247,8 +247,6 @@ class WhisperTranscriber:
             return await self._transcribe_batch(audio_data)
 
 
-
-
 class TranscriptionProcessor:
     """Processes transcriptions and detects control phrases."""
 
@@ -281,7 +279,7 @@ class TranscriptionProcessor:
         exact_match = self.activation_phrase in text_lower
 
         # Generate common variations of the activation phrase
-        activation_words = self.activation_phrase.split(', ')
+        activation_words = self.activation_phrase.split(", ")
         # If activation phrase is like "hey, speechless", we get ["hey", "speechless"]
         if len(activation_words) > 1:
             name_part = activation_words[-1]
@@ -297,27 +295,27 @@ class TranscriptionProcessor:
             greeting_variations.extend(["ok", "k", "hey"])
 
         # Generate fuzzy matches using variations
-        fuzzy_matches = [
-            f"{g} {name_part}" for g in greeting_variations if g
-        ]
-        fuzzy_matches.extend([
-            f"{g}, {name_part}" for g in greeting_variations if g
-        ])
+        fuzzy_matches = [f"{g} {name_part}" for g in greeting_variations if g]
+        fuzzy_matches.extend([f"{g}, {name_part}" for g in greeting_variations if g])
 
         # Add variations with common misspellings or misheard words
         has_less = "less" in name_part
         if has_less:
-            fuzzy_matches.extend([
-                f"{g} {name_part.replace('less', '-less')}"
-                for g in greeting_variations if g
-            ])
-            fuzzy_matches.extend([
-                f"{g} {name_part.replace('less', ' less')}"
-                for g in greeting_variations if g
-            ])
-        fuzzy_matches.extend([
-            f"{g} {name_part}s" for g in greeting_variations if g
-        ])
+            fuzzy_matches.extend(
+                [
+                    f"{g} {name_part.replace('less', '-less')}"
+                    for g in greeting_variations
+                    if g
+                ]
+            )
+            fuzzy_matches.extend(
+                [
+                    f"{g} {name_part.replace('less', ' less')}"
+                    for g in greeting_variations
+                    if g
+                ]
+            )
+        fuzzy_matches.extend([f"{g} {name_part}s" for g in greeting_variations if g])
 
         # Remove duplicates and the exact activation phrase which is checked separately
         fuzzy_matches = list(set(fuzzy_matches))
@@ -369,29 +367,35 @@ class TranscriptionProcessor:
                 action_word = base_words[0]  # "end", "stop", etc.
 
                 # Add variations with common misspellings
-                fuzzy_deactivation_matches.extend([
-                    f"{action_word} speechless",
-                    f"{action_word} speech less",
-                    f"{action_word} speech-less",
-                    f"{action_word} speachless",
-                    f"{action_word} speech list",
-                    f"{action_word} speechlist",
-                ])
+                fuzzy_deactivation_matches.extend(
+                    [
+                        f"{action_word} speechless",
+                        f"{action_word} speech less",
+                        f"{action_word} speech-less",
+                        f"{action_word} speachless",
+                        f"{action_word} speech list",
+                        f"{action_word} speechlist",
+                    ]
+                )
 
                 # Add related words with similar meaning
                 if action_word == "end":
-                    fuzzy_deactivation_matches.extend([
-                        "finish speechless",
-                        "close speechless",
-                        "exit speechless",
-                        "terminate speechless",
-                    ])
+                    fuzzy_deactivation_matches.extend(
+                        [
+                            "finish speechless",
+                            "close speechless",
+                            "exit speechless",
+                            "terminate speechless",
+                        ]
+                    )
                 elif action_word == "stop":
-                    fuzzy_deactivation_matches.extend([
-                        "halt speechless",
-                        "pause speechless",
-                        "cancel speechless",
-                    ])
+                    fuzzy_deactivation_matches.extend(
+                        [
+                            "halt speechless",
+                            "pause speechless",
+                            "cancel speechless",
+                        ]
+                    )
 
         # Check for fuzzy matches
         for fuzzy_match in fuzzy_deactivation_matches:
@@ -436,7 +440,7 @@ class TranscriptionProcessor:
         else:
             # If no exact match, check for fuzzy matches
             # Generate all the same fuzzy matches as in is_activation_phrase
-            activation_words = self.activation_phrase.split(', ')
+            activation_words = self.activation_phrase.split(", ")
             if len(activation_words) > 1:
                 name_part = activation_words[-1]
             else:
@@ -454,29 +458,35 @@ class TranscriptionProcessor:
             all_fuzzy_matches = []
 
             # Plain variations
-            all_fuzzy_matches.extend([
-                f"{g} {name_part}" for g in greeting_variations if g
-            ])
+            all_fuzzy_matches.extend(
+                [f"{g} {name_part}" for g in greeting_variations if g]
+            )
 
             # Comma variations
-            all_fuzzy_matches.extend([
-                f"{g}, {name_part}" for g in greeting_variations if g
-            ])
+            all_fuzzy_matches.extend(
+                [f"{g}, {name_part}" for g in greeting_variations if g]
+            )
 
             # Add variations with common misspellings
             has_less = "less" in name_part
             if has_less:
-                all_fuzzy_matches.extend([
-                    f"{g} {name_part.replace('less', '-less')}"
-                    for g in greeting_variations if g
-                ])
-                all_fuzzy_matches.extend([
-                    f"{g} {name_part.replace('less', ' less')}"
-                    for g in greeting_variations if g
-                ])
-            all_fuzzy_matches.extend([
-                f"{g} {name_part}s" for g in greeting_variations if g
-            ])
+                all_fuzzy_matches.extend(
+                    [
+                        f"{g} {name_part.replace('less', '-less')}"
+                        for g in greeting_variations
+                        if g
+                    ]
+                )
+                all_fuzzy_matches.extend(
+                    [
+                        f"{g} {name_part.replace('less', ' less')}"
+                        for g in greeting_variations
+                        if g
+                    ]
+                )
+            all_fuzzy_matches.extend(
+                [f"{g} {name_part}s" for g in greeting_variations if g]
+            )
 
             # Sort by length (descending) to find the longest match first
             all_fuzzy_matches.sort(key=len, reverse=True)
@@ -491,7 +501,7 @@ class TranscriptionProcessor:
                     logger.debug(
                         "Text after fuzzy match activation phrase",
                         fuzzy_match=fuzzy_match,
-                        command=command
+                        command=command,
                     )
                     break
 
@@ -522,12 +532,14 @@ class TranscriptionProcessor:
                 if len(base_words) >= 2 and "speechless" in phrase:
                     action_word = base_words[0]
 
-                    fuzzy_deactivation_matches.extend([
-                        f"{action_word} speechless",
-                        f"{action_word} speech less",
-                        f"{action_word} speech-less",
-                        f"{action_word} speachless",
-                    ])
+                    fuzzy_deactivation_matches.extend(
+                        [
+                            f"{action_word} speechless",
+                            f"{action_word} speech less",
+                            f"{action_word} speech-less",
+                            f"{action_word} speachless",
+                        ]
+                    )
 
             # Check and remove any fuzzy deactivation matches
             for fuzzy_match in fuzzy_deactivation_matches:

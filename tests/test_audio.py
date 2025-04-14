@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
-
 from speech_to_console.audio import AudioRecorder
 
 
@@ -131,8 +130,11 @@ def test_record_until_silence_basic(mock_np_abs, mock_input_stream, audio_record
     ]
 
     # Override speech quality checks
-    with patch.object(audio_recorder, 'last_recording_metadata',
-                     {'speech_quality': {'is_likely_speech': True, 'amplitude_std': 30.0}}):
+    with patch.object(
+        audio_recorder,
+        "last_recording_metadata",
+        {"speech_quality": {"is_likely_speech": True, "amplitude_std": 30.0}},
+    ):
         # Record until silence with threshold of 1 silent frame
         result = audio_recorder.record_until_silence(silence_threshold=1)
 
@@ -172,7 +174,10 @@ def test_noise_detection(mock_input_stream, audio_recorder):
     assert np.all(result == 0)
 
     # Check that speech quality metadata indicates this isn't speech
-    assert audio_recorder.last_recording_metadata["speech_quality"]["is_likely_speech"] is False
+    assert (
+        audio_recorder.last_recording_metadata["speech_quality"]["is_likely_speech"]
+        is False
+    )
 
 
 @patch("sounddevice.InputStream")
@@ -203,7 +208,7 @@ def test_true_speech_detection(mock_np_abs, mock_input_stream, audio_recorder):
     ]
 
     # Record until silence
-    with patch.object(audio_recorder, 'min_audio_duration_seconds', 0.1):
+    with patch.object(audio_recorder, "min_audio_duration_seconds", 0.1):
         result = audio_recorder.record_until_silence(silence_threshold=1)
 
     # Verify we got a non-empty result
@@ -211,7 +216,10 @@ def test_true_speech_detection(mock_np_abs, mock_input_stream, audio_recorder):
     assert not np.all(result == 0)
 
     # Check that speech quality metadata indicates this is speech
-    assert audio_recorder.last_recording_metadata["speech_quality"]["is_likely_speech"] is True
+    assert (
+        audio_recorder.last_recording_metadata["speech_quality"]["is_likely_speech"]
+        is True
+    )
 
 
 def test_audio_to_bytes_io(audio_recorder):

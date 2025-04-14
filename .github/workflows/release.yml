@@ -30,7 +30,7 @@ jobs:
         run: |
           chmod +x ./install_dependencies.sh
           ./install_dependencies.sh
-          
+
       - name: Install dependencies
         run: uv sync
 
@@ -40,21 +40,20 @@ jobs:
       - name: Extract version from tag
         id: get_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
-        
-      - name: Update CHANGELOG.md
+
+      - name: Get changelog content
         id: changelog
         run: |
           # Get today's date
           TODAY=$(date +"%Y-%m-%d")
-          
-          # Extract changelog content for this version
+
           CONTENT=$(awk -v version="$VERSION" '
           BEGIN { unreleased=0; found=0; }
           /^## \[Unreleased\]/ { unreleased=1; next; }
-          /^## \[[0-9]+\.[0-9]+\.[0-9]+\]/ { 
+          /^## \[[0-9]+\.[0-9]+\.[0-9]+\]/ {
             if (unreleased==1) {
               print "## [" version "] - " "'$TODAY'"
-              unreleased=0; 
+              unreleased=0;
               found=1;
             } else if (found==1) {
               exit;
@@ -62,15 +61,14 @@ jobs:
           }
           unreleased==1 || found==1 { print; }
           ' CHANGELOG.md)
-          
-          # If no content is found in the Unreleased section, use generic message
+
           if [ -z "$CONTENT" ]; then
-            CONTENT="## [$VERSION] - $TODAY
+          CONTENT="## [$VERSION] - $TODAY
 
 ### Added
 - New release version $VERSION"
           fi
-          
+
           echo "CHANGELOG_CONTENT<<EOF" >> $GITHUB_OUTPUT
           echo "$CONTENT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT

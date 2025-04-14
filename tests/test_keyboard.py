@@ -3,7 +3,6 @@
 from unittest.mock import patch
 
 import pytest
-
 from speech_to_console.keyboard import KeyboardController
 
 

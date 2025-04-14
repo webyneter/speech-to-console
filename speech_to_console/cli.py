@@ -309,7 +309,7 @@ def main(
             "Initializing transcriber",
             model=config.whisper_model,
             use_streaming=config.use_streaming,
-            stream_chunk_size_ms=config.stream_chunk_size_ms
+            stream_chunk_size_ms=config.stream_chunk_size_ms,
         )
         transcriber = WhisperTranscriber(config)
 

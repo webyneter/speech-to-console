@@ -30,6 +30,7 @@ dev = [
     "ruff",
     "tomli",
     "tomli-w",
+    "pre-commit",
 ]
 
 [project.scripts]
@@ -39,9 +40,17 @@ release = "scripts.release:main"
 [tool.ruff]
 line-length = 88
 target-version = "py310"
+src = ["speech_to_console", "scripts", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "W"]
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -5,7 +5,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
-
 from speech_to_console.config import Config
 from speech_to_console.transcriber import TranscriptionProcessor, WhisperTranscriber
 
@@ -134,7 +133,10 @@ async def test_transcribe_success(whisper_transcriber):
 
         # Check the headers contain the API key
         assert "Authorization" in kwargs["headers"]
-        assert f"Bearer {whisper_transcriber.api_key}" == kwargs["headers"]["Authorization"]
+        assert (
+            f"Bearer {whisper_transcriber.api_key}"
+            == kwargs["headers"]["Authorization"]
+        )
 
         # Check the files contain the correct model
         assert "model" in kwargs["files"]
@@ -173,7 +175,9 @@ async def test_transcribe_timeout(whisper_transcriber):
 
     # Create a mock client that raises a timeout
     mock_client = AsyncMock()
-    mock_client.__aenter__.return_value.post.side_effect = httpx.TimeoutException("Timeout")
+    mock_client.__aenter__.return_value.post.side_effect = httpx.TimeoutException(
+        "Timeout"
+    )
 
     # Patch the httpx.AsyncClient to return our mock
     with patch("httpx.AsyncClient", return_value=mock_client):
