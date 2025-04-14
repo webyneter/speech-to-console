@@ -17,12 +17,4 @@ echo -e "${YELLOW}Installing PortAudio and other runtime dependencies...${NC}"
 sudo apt-get install -y portaudio19-dev python3-pyaudio python3-tk python3-dev
 
 echo -e "\n${GREEN}Runtime dependencies installed successfully!${NC}"
-echo -e "${YELLOW}Next steps:${NC}"
-echo "1. Create a .env file with your OpenAI API key:"
-echo "   cp example.env .env"
-echo "   nano .env  # Edit to add your API key"
-echo ""
-echo "2. Run the speech-to-console tool:"
-echo "   speech-to-console"
-echo ""
-echo -e "${GREEN}Enjoy using speech-to-console!${NC}"
+echo -e "${YELLOW}See README.md for next steps.${NC}"

@@ -30,10 +30,15 @@ pip install -e .
 
 ## Install the Package as a CLI
 
-In addition to the basic installation, you will need:
+In addition to the basic installation, you will need the following system dependencies:
 
 - [pipx](https://pypa.github.io/pipx/): A tool to install and run Python applications in isolated environments.
-- PortAudio: A system library for audio input/output (install with `sudo apt-get install portaudio19-dev` on Ubuntu/Debian)
+- System dependencies (for Ubuntu/Debian, run our install script):
+
+```shell
+# Run the dependency installation script (Ubuntu/Debian)
+./install_dependencies.sh
+```
 
 Now, build the package:
 
