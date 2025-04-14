@@ -25,6 +25,8 @@ uv sync
 uv sync --all-groups
 ```
 
+> **Note:** This project requires Python 3.10 specifically, not a newer version. This is due to compatibility issues with PyAutoGUI, a dependency used for keyboard input. As documented in [this PyAutoGUI issue](https://github.com/asweigart/pyautogui/issues/683#issuecomment-2750298345), the library has compatibility problems with Python 3.12+.
+
 ## Install the Package as a CLI
 
 In addition to the basic installation, you will need the following system dependencies:
