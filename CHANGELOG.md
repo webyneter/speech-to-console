@@ -16,6 +16,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add automated release workflow with GitHub Actions
 
 ### Fixed
+- Fix release script to handle pre-commit hook modifications
+- Fix CI test issues by mocking GUI dependencies
+- Fix CI build issues
+
+### Changed
+- Update release workflow to publish to PyPI
+- Update setup-headless-display-action to v3 in CI configuration
+- Update release script to also update __init__.py version
+- Update author information in pyproject.toml
+- Streamline release process with a single script
+- Update README.md to clarify tool usage and requirements
+- Update README.md to include 'uv' package requirement
+
+### Dependencies
+- Bump speech-to-console version to 0.2.2
+
+
+## [0.3.0] - 2025-04-14
+
+### Added
+- Add build and test badge to README
+- Add pre-commit hooks for auto-formatting and linting
+- Add uv.lock file update to release process
+- Add automated release workflow with GitHub Actions
+
+### Fixed
 - Fix CI test issues by mocking GUI dependencies
 - Fix CI build issues
 
