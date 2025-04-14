@@ -55,10 +55,15 @@ jobs:
         id: date
         run: echo "TODAY=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
-      - name: Create default changelog
+      - name: Create default changelog content file
         id: default_changelog
         run: |
-          echo "DEFAULT_CONTENT=## [$VERSION] - $TODAY\n\n### Added\n- New release version $VERSION" >> $GITHUB_ENV
+          cat > default_changelog.md << EOF
+          ## [$VERSION] - $TODAY
+
+          ### Added
+          - New release version $VERSION
+          EOF
 
       - name: Extract changelog
         id: changelog
@@ -71,8 +76,10 @@ jobs:
           START_LINE=$(grep -n "$VERSION_PATTERN" CHANGELOG.md | cut -d: -f1)
 
           if [ -z "$START_LINE" ]; then
-            # If version not found, use default content
-            echo "CHANGELOG_CONTENT=$DEFAULT_CONTENT" >> $GITHUB_OUTPUT
+            # If version not found, use default content from file
+            echo "CHANGELOG_CONTENT<<EOF" >> $GITHUB_OUTPUT
+            cat default_changelog.md >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
           else
             # Find the next version section (or EOF if this is the latest version)
             END_LINE=$(tail -n +$((START_LINE+1)) CHANGELOG.md | grep -n "$NEXT_VERSION_PATTERN" | head -1 | cut -d: -f1)
