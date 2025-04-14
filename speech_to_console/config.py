@@ -2,9 +2,12 @@
 
 import os
 from pathlib import Path
+from typing import Literal
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
+
+LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 
 class Config(BaseModel):
@@ -13,6 +16,7 @@ class Config(BaseModel):
     openai_api_key: str = Field(..., description="OpenAI API key")
     whisper_model: str = Field("whisper-1", description="Whisper model to use")
     api_timeout: int = Field(10, description="API request timeout in seconds")
+    log_level: LogLevel = Field("INFO", description="Logging level")
 
     # Speech recognition settings
     activation_phrase: str = "hey stt"
@@ -29,14 +33,24 @@ def load_config() -> Config:
     openai_api_key = os.getenv("OPENAI_API_KEY")
     whisper_model = os.getenv("WHISPER_MODEL", "whisper-1")
     api_timeout = int(os.getenv("API_TIMEOUT", "10"))
+    log_level = os.getenv("LOG_LEVEL", "INFO")
 
     if not openai_api_key:
         raise ValueError(
             "OPENAI_API_KEY not found in environment variables or .env file"
         )
 
+    # Validate log level
+    valid_log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+    if log_level not in valid_log_levels:
+        raise ValueError(
+            f"Invalid LOG_LEVEL: {log_level}. "
+            f"Must be one of: {', '.join(valid_log_levels)}"
+        )
+
     return Config(
         openai_api_key=openai_api_key,
         whisper_model=whisper_model,
         api_timeout=api_timeout,
+        log_level=log_level,
     )

@@ -1,5 +1,6 @@
 """Tests for the transcriber module."""
 
+
 from speech_to_console.config import Config
 from speech_to_console.transcriber import TranscriptionProcessor
 

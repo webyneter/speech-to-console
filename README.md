@@ -92,7 +92,12 @@ cp example.env .env
 
 ```
 OPENAI_API_KEY=your-api-key-here
+
+# Optional: Change the logging level (default is INFO)
+LOG_LEVEL=INFO
 ```
+
+Available logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 ## Usage
 
@@ -100,7 +105,13 @@ OPENAI_API_KEY=your-api-key-here
 2. In the first window, start the speech-to-console tool:
 
 ```bash
-speech-to-console
+speech-to-console  # Basic usage
+
+# For verbose logging (DEBUG level)
+speech-to-console --verbose
+
+# Set a specific logging level
+speech-to-console --log-level DEBUG
 ```
 
 3. In the second window, make it active (click on it)
@@ -138,9 +149,10 @@ uv run ruff format .
 
 You can customize the tool behavior by modifying these files:
 
-- `speech_to_console/config.py`: Change activation/deactivation phrases 
+- `speech_to_console/config.py`: Change activation/deactivation phrases and logging settings
 - `speech_to_console/audio.py`: Adjust audio recording parameters
 - `speech_to_console/keyboard.py`: Modify typing speed and behavior
+- `speech_to_console/logging.py`: Customize logging configuration
 
 ### Troubleshooting
 

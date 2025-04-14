@@ -4,6 +4,7 @@ import asyncio
 import sys
 from pathlib import Path
 
+import structlog
 import typer
 from rich.console import Console
 from rich.style import Style
@@ -11,6 +12,7 @@ from rich.style import Style
 from speech_to_console.audio import AudioRecorder
 from speech_to_console.config import load_config
 from speech_to_console.keyboard import KeyboardController
+from speech_to_console.logging import setup_logging
 from speech_to_console.transcriber import TranscriptionProcessor, WhisperTranscriber
 
 app = typer.Typer(
@@ -20,6 +22,7 @@ app = typer.Typer(
 )
 
 console = Console()
+logger = structlog.get_logger("speech_to_console")
 
 
 async def process_audio(
@@ -45,27 +48,44 @@ async def process_audio(
         style=Style(color="green"),
     )
 
+    logger.info(
+        "Audio processing started",
+        activation_phrase="hey stt",
+        deactivation_phrases=processor.deactivation_phrases,
+    )
+
     is_active = False
 
     while True:
         try:
             # Record audio chunk (approx. 2-3 seconds)
+            logger.debug("Recording audio chunk", max_seconds=3, silence_threshold=5)
             audio_data = audio_recorder.record_until_silence(
                 max_seconds=3, silence_threshold=5
             )
 
             # Convert to bytes IO for API submission
             audio_bytes = audio_recorder.audio_to_bytes_io(audio_data)
+            logger.debug(
+                "Audio recorded and converted", audio_length_samples=len(audio_data)
+            )
 
             # Transcribe
+            logger.debug("Transcribing audio", model=transcriber.model)
             transcription = await transcriber.transcribe(audio_bytes)
 
             if not transcription:
+                logger.debug("Empty transcription received, continuing")
                 continue
+
+            logger.debug(
+                "Transcription received", raw_text=transcription, is_active=is_active
+            )
 
             # Check for activation phrase
             if not is_active and processor.is_activation_phrase(transcription):
                 is_active = True
+                logger.info("Activation phrase detected", transcription=transcription)
                 console.print(
                     "✅ Activated! Transcribing to active terminal...",
                     style=Style(color="green", bold=True),
@@ -74,6 +94,9 @@ async def process_audio(
                 # Extract command if it's in the same utterance
                 command = processor.extract_command(transcription)
                 if command:
+                    logger.info(
+                        "Command extracted from activation utterance", command=command
+                    )
                     console.print(f"🔤 Typing: {command}")
                     keyboard.type_text(command)
 
@@ -82,6 +105,9 @@ async def process_audio(
                 # Check for deactivation phrase
                 if processor.is_deactivation_phrase(transcription):
                     is_active = False
+                    logger.info(
+                        "Deactivation phrase detected", transcription=transcription
+                    )
                     console.print(
                         "⛔ Deactivated. Listening for activation phrase...",
                         style=Style(color="red"),
@@ -93,12 +119,15 @@ async def process_audio(
                 if not command:
                     command = transcription
 
+                logger.info("Typing command", command=command)
                 console.print(f"🔤 Typing: {command}")
                 keyboard.type_text(command)
 
         except KeyboardInterrupt:
+            logger.info("Keyboard interrupt received, stopping")
             break
         except Exception as e:
+            logger.error("Error during audio processing", error=str(e), exc_info=True)
             console.print(f"Error: {e}", style=Style(color="red"))
             await asyncio.sleep(1)
 
@@ -116,14 +145,17 @@ def version_callback(value: bool) -> None:
 def main(
     ctx: typer.Context,
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show verbose output"),
-    version: bool = typer.Option(
-        False, "--version", help="Show the version and exit."
+    version: bool = typer.Option(False, "--version", help="Show the version and exit."),
+    log_level: str = typer.Option(
+        None,
+        "--log-level",
+        help="Set logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
     ),
 ) -> None:
     """Convert spoken commands to console operations."""
     if version:
         version_callback(version)
-    
+
     if ctx.invoked_subcommand is not None:
         return
 
@@ -141,10 +173,40 @@ def main(
         # Load configuration
         config = load_config()
 
+        # Override log level from command line if provided
+        if log_level:
+            config.log_level = log_level
+
+        # Force DEBUG level if verbose flag is used
+        if verbose:
+            config.log_level = "DEBUG"  # type: ignore # Mypy flags this, but it's valid at runtime
+
+        # Setup logging
+        global logger
+        logger = setup_logging(config)
+
+        logger.info(
+            "Speech to Console starting",
+            version=getattr(sys.modules["speech_to_console"], "__version__", "unknown"),
+            log_level=config.log_level,
+            whisper_model=config.whisper_model,
+        )
+
         # Initialize components
+        logger.debug("Initializing audio recorder")
         audio_recorder = AudioRecorder()
+
+        logger.debug("Initializing transcriber", model=config.whisper_model)
         transcriber = WhisperTranscriber(config)
+
+        logger.debug(
+            "Initializing transcription processor",
+            activation_phrase=config.activation_phrase,
+            deactivation_phrases=config.deactivation_phrases,
+        )
         processor = TranscriptionProcessor(config)
+
+        logger.debug("Initializing keyboard controller")
         keyboard = KeyboardController()
 
         # Start processing
@@ -157,14 +219,19 @@ def main(
             style=Style(color="yellow"),
         )
 
+        logger.info("Audio processing loop starting")
+
         # Run the main loop
         try:
             asyncio.run(process_audio(audio_recorder, transcriber, processor, keyboard))
         except KeyboardInterrupt:
+            logger.info("Keyboard interrupt received, exiting")
             console.print("Exiting...", style=Style(color="yellow"))
 
     except Exception as e:
-        console.print(f"Error: {e}", style=Style(color="red", bold=True))
+        error_msg = str(e)
+        logger.error("Startup error", error=error_msg, exc_info=True)
+        console.print(f"Error: {error_msg}", style=Style(color="red", bold=True))
         if verbose:
             import traceback
 

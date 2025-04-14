@@ -581,6 +581,7 @@ dependencies = [
     { name = "rich" },
     { name = "sounddevice" },
     { name = "soundfile" },
+    { name = "structlog" },
     { name = "typer" },
 ]
 
@@ -601,6 +602,7 @@ requires-dist = [
     { name = "rich" },
     { name = "sounddevice" },
     { name = "soundfile" },
+    { name = "structlog" },
     { name = "typer" },
 ]
 
@@ -609,6 +611,18 @@ dev = [
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
+]
+
+[[package]]
+name = "structlog"
+version = "25.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/78/b8/d3670aec25747e32d54cd5258102ae0d69b9c61c79e7aa326be61a570d0d/structlog-25.2.0.tar.gz", hash = "sha256:d9f9776944207d1035b8b26072b9b140c63702fd7aa57c2f85d28ab701bd8e92", size = 1367438 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/51/eb/244741c1abf7b4092686db0798a4c43491298f40ddec4226f5c4f6b5d3eb/structlog-25.2.0-py3-none-any.whl", hash = "sha256:0fecea2e345d5d491b72f3db2e5fcd6393abfc8cd06a4851f21fcd4d1a99f437", size = 68448 },
 ]
 
 [[package]]
