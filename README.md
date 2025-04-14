@@ -29,8 +29,9 @@ Speech to Console lets you control your terminal with voice commands. Just say "
 - **Parallel processing** of audio chunks for faster results
 
 ## 🧰 Requirements
-
-- Python 3.10 (specifically required due to PyAutoGUI compatibility)
+ 
+- [uv](https://docs.astral.sh/uv/): An extremely fast Python package and project manager, written in Rust
+- Python 3.10 (specifically required due to PyAutoGUI compatibility): `uv` will install the Python for you if needed
 - OpenAI API key
 - Linux-based system (tested on Ubuntu)
 - Audio input device (microphone)
