@@ -19,8 +19,11 @@ class Config(BaseModel):
     log_level: LogLevel = Field("INFO", description="Logging level")
 
     # Speech recognition settings
-    activation_phrase: str = "hey stt"
-    deactivation_phrases: list[str] = ["end stt", "that's it for stt", "stop stt"]
+    activation_phrase: str = "okay, speechless"
+    deactivation_phrases: list[str] = ["end speechless", "that's it for speechless", "stop speechless"]
+    
+    # Audio settings
+    silent_threshold: int = Field(100, description="Threshold for silence detection (lower = more sensitive)")
 
 
 def load_config() -> Config:
@@ -34,6 +37,7 @@ def load_config() -> Config:
     whisper_model = os.getenv("WHISPER_MODEL", "whisper-1")
     api_timeout = int(os.getenv("API_TIMEOUT", "10"))
     log_level = os.getenv("LOG_LEVEL", "INFO")
+    silent_threshold = int(os.getenv("SILENT_THRESHOLD", "50"))
 
     if not openai_api_key:
         raise ValueError(
@@ -53,4 +57,5 @@ def load_config() -> Config:
         whisper_model=whisper_model,
         api_timeout=api_timeout,
         log_level=log_level,
+        silent_threshold=silent_threshold,
     )

@@ -60,6 +60,8 @@ class WhisperTranscriber:
         files = {
             "file": ("audio.wav", audio_data, "audio/wav"),
             "model": (None, self.model),
+            "language": (None, "en"),
+            "response_format": (None, "json"),
         }
 
         logger.debug(
@@ -138,13 +140,32 @@ class TranscriptionProcessor:
             True if activation phrase is detected
         """
         text_lower = text.lower()
-        result = self.activation_phrase in text_lower
+        # Check exact match
+        exact_match = self.activation_phrase in text_lower
+        
+        # Check for fuzzy matches (common variations)
+        fuzzy_matches = [
+            "okay speechless",
+            "ok speechless",
+            "ok, speechless",
+            "okay speech less",
+            "okay speech-less",
+            "okay space less",
+            "okay, speech less",
+            "k speechless",
+            "okay speechles",
+            "okay speachless",
+            "okay, speachless"
+        ]
+        
+        result = exact_match or any(match in text_lower for match in fuzzy_matches)
 
         if result:
             logger.debug(
                 "Activation phrase detected",
                 text=text,
                 activation_phrase=self.activation_phrase,
+                exact_match=exact_match,
             )
 
         return result

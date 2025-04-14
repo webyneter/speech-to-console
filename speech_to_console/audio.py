@@ -23,6 +23,7 @@ class AudioRecorder:
         channels: int = 1,
         dtype: str = "int16",
         blocksize: int = 1024,
+        silent_threshold: int = 50,
     ):
         """Initialize the audio recorder.
 
@@ -31,6 +32,7 @@ class AudioRecorder:
             channels: Number of audio channels (1=mono, 2=stereo)
             dtype: Data type for audio samples
             blocksize: Block size for audio processing
+            silent_threshold: Threshold for silence detection (lower = more sensitive)
         """
         self.rate = rate
         self.channels = channels
@@ -38,7 +40,7 @@ class AudioRecorder:
         self.blocksize = blocksize
         self.is_recording = False
         self.stream = None
-        self.silent_threshold = 100  # Adjust as needed
+        self.silent_threshold = silent_threshold  # From config or default
 
         # Format mapping for wave module
         self.format_map = {
@@ -131,6 +133,9 @@ class AudioRecorder:
         max_chunks = int(self.rate / self.blocksize * max_seconds)
         silent_chunks = 0
         start_time = time.time()
+        
+        # Track overall max amplitude to detect if any real speech occurred
+        overall_max_amplitude = 0
 
         for _ in range(max_chunks):
             data = self.record_chunk()
@@ -138,6 +143,8 @@ class AudioRecorder:
 
             # Check for silence
             max_amplitude = np.abs(data).max()
+            overall_max_amplitude = max(overall_max_amplitude, max_amplitude)
+            
             if max_amplitude < self.silent_threshold:
                 silent_chunks += 1
                 logger.debug(
@@ -152,6 +159,22 @@ class AudioRecorder:
                     break
             else:
                 silent_chunks = 0
+                
+        # If maximum amplitude was very low, this was probably just background noise
+        if overall_max_amplitude < self.silent_threshold * 1.5:
+            logger.debug(
+                "Very low amplitude audio detected, likely just background noise",
+                overall_max_amplitude=float(overall_max_amplitude),
+                threshold=self.silent_threshold,
+            )
+            # Return empty frames to avoid processing background noise
+            if len(frames) > 0:
+                # Return the same shape but with zeros
+                result = np.zeros_like(np.concatenate(frames))
+                return result
+            else:
+                # Return empty array if no frames
+                return np.zeros(1, dtype=np.int16)
 
         elapsed_time = time.time() - start_time
         result = np.concatenate(frames)

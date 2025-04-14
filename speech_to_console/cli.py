@@ -4,6 +4,7 @@ import asyncio
 import sys
 from pathlib import Path
 
+import numpy as np
 import structlog
 import typer
 from rich.console import Console
@@ -40,17 +41,17 @@ async def process_audio(
         keyboard: Keyboard controller instance
     """
     console.print(
-        "Listening for activation phrase: 'hey stt'",
+        "Listening for activation phrase: 'okay, speechless'",
         style=Style(color="green", bold=True),
     )
     console.print(
-        "Say 'end stt' or 'that's it for stt' to stop transcription",
+        "Say 'end speechless' or 'that's it for speechless' to stop transcription",
         style=Style(color="green"),
     )
 
     logger.info(
         "Audio processing started",
-        activation_phrase="hey stt",
+        activation_phrase=processor.activation_phrase,
         deactivation_phrases=processor.deactivation_phrases,
     )
 
@@ -63,6 +64,12 @@ async def process_audio(
             audio_data = audio_recorder.record_until_silence(
                 max_seconds=3, silence_threshold=5
             )
+            
+            # Skip processing if audio data is all zeros (background noise)
+            if np.all(audio_data == 0):
+                logger.debug("Skipping empty audio (background noise)")
+                await asyncio.sleep(0.1)  # Short sleep to avoid CPU spinning
+                continue
 
             # Convert to bytes IO for API submission
             audio_bytes = audio_recorder.audio_to_bytes_io(audio_data)
@@ -81,13 +88,20 @@ async def process_audio(
             logger.debug(
                 "Transcription received", raw_text=transcription, is_active=is_active
             )
+            
+            # Add visual feedback when not active
+            if not is_active:
+                console.print(
+                    f"👂 Heard: '{transcription}'", 
+                    style=Style(color="blue", dim=True)
+                )
 
             # Check for activation phrase
             if not is_active and processor.is_activation_phrase(transcription):
                 is_active = True
                 logger.info("Activation phrase detected", transcription=transcription)
                 console.print(
-                    "✅ Activated! Transcribing to active terminal...",
+                    f"✅ Activated! Transcribing to active terminal... (Detected in: '{transcription}')",
                     style=Style(color="green", bold=True),
                 )
 
@@ -193,8 +207,8 @@ def main(
         )
 
         # Initialize components
-        logger.debug("Initializing audio recorder")
-        audio_recorder = AudioRecorder()
+        logger.debug("Initializing audio recorder", silent_threshold=config.silent_threshold)
+        audio_recorder = AudioRecorder(silent_threshold=config.silent_threshold)
 
         logger.debug("Initializing transcriber", model=config.whisper_model)
         transcriber = WhisperTranscriber(config)

@@ -6,7 +6,7 @@ A tool that converts spoken commands to console/terminal operations using real-t
 
 - Voice-activated command transcription for terminal
 - Uses OpenAI Whisper API for accurate speech recognition
-- Supports activation with "hey stt" and deactivation with "end stt" or "that's it for stt"
+- Supports activation with "okay, speechless" and deactivation with "end speechless" or "that's it for speechless"
 - Types transcribed text into active Ubuntu Terminal window
 
 ## Installation
@@ -84,13 +84,20 @@ This makes the `speech-to-console` command available system-wide without affecti
 cp example.env .env
 ```
 
-2. Add your OpenAI API key to the `.env` file:
+2. Add your OpenAI API key and customize settings in the `.env` file:
 
 ```
+# Required: Your OpenAI API key
 OPENAI_API_KEY=your-api-key-here
 
 # Optional: Change the logging level (default is INFO)
 LOG_LEVEL=INFO
+
+# Optional: Adjust the microphone sensitivity (default is 100)
+# Lower values = more sensitive (picks up quieter sounds)
+# Higher values = less sensitive (requires louder speech)
+# If you're getting false transcriptions from background noise, try 150-200
+SILENT_THRESHOLD=100
 ```
 
 Available logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
@@ -183,8 +190,27 @@ You can customize the tool behavior by modifying these files:
 
 - **Microphone not working**: Check your system's audio input settings
 - **API errors**: Verify your API key in the `.env` file
-- **Text not being typed**: Make sure you've clicked on the target window
-- **Transcription quality issues**: Try speaking more clearly or adjusting your microphone
+- **Text not being typed**: 
+  - Make sure you've clicked on the target window before speaking
+  - Check if PyAutoGUI has proper permissions on your system
+  - Try running the app with elevated permissions if needed
+  - If using Wayland, try switching to X11 (PyAutoGUI works better with X11)
+  - The PyAutoGUI fail-safe has been disabled, so mouse movements won't interrupt typing
+- **Activation phrase not detected**:
+  - Run with `--log-level DEBUG` to see what the transcription actually heard
+  - Try speaking "okay, speechless" more clearly and directly into the microphone
+  - Try speaking in a quiet environment with minimal background noise
+  - If you see your speech being transcribed but activation isn't happening, try adjusting the code in `transcriber.py` to add more variations of the activation phrase
+- **Foreign characters or gibberish in transcription**:
+  - This is a common issue with Whisper API when it's unsure of the language
+  - We've updated the code to force English language detection
+  - If you still see this issue, try speaking more clearly and avoid background noise
+  - Keep speaking only English during usage
+  - If the problem persists, try increasing the microphone volume
+- **Background noise causing false transcriptions**:
+  - If you're getting transcriptions when not speaking, increase the SILENT_THRESHOLD value
+  - Try values between 100-200 depending on your environment
+  - The app now detects and ignores very low amplitude audio
 
 ## License
 
