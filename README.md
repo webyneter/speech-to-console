@@ -1,5 +1,7 @@
 # Speech to Console
 
+[![Build and Test](https://github.com/webyneter/speech-to-console/actions/workflows/build.yml/badge.svg)](https://github.com/webyneter/speech-to-console/actions/workflows/build.yml)
+
 A voice-controlled tool that converts spoken commands to text in your terminal using OpenAI's Whisper API.
 
 _N.B. This tool is not specifically designed for any particular terminal or console. It is a general-purpose tool that
