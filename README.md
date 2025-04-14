@@ -87,44 +87,32 @@ uv run pipx install --force .
 
 ### Releasing New Versions
 
-To create a new release:
+Creating a new release is now a one-step process:
 
-1. Generate CHANGELOG entries from commit history:
-   ```bash
-   # If installed as editable package:
-   changelog-gen
-   
-   # Or run directly:
-   uv run python ./scripts/generate_changelog.py
-   
-   # Optionally, preview without updating the file:
-   changelog-gen --dry-run
-   ```
+```bash
+# Run the release script with the desired version number:
+uv run python ./scripts/release.py 0.2.3
 
-2. Review and edit the `[Unreleased]` section in `CHANGELOG.md` as needed
+# For a dry run (no changes made):
+uv run python ./scripts/release.py 0.2.3 --dry-run
+```
 
-3. Run the version bump script:
-   ```bash
-   # If installed as editable package:
-   version-bump patch  # For patch release (0.2.2 -> 0.2.3)
-   version-bump minor  # For minor release (0.2.2 -> 0.3.0)
-   version-bump major  # For major release (0.2.2 -> 1.0.0)
-   version-bump custom --version 0.2.4  # For custom version
-   
-   # Or run directly:
-   uv run python ./scripts/bump_version.py patch
-   ```
+This single command will:
+1. Update the version in `pyproject.toml`
+2. Generate CHANGELOG entries from commit history
+3. Commit the changes
+4. Create a git tag for the release
 
-4. Push the changes and tag:
-   ```bash
-   git push && git push origin v0.2.3
-   ```
+Then push the changes and tag to trigger the release workflow:
+```bash
+git push && git push origin v0.2.3
+```
 
-5. GitHub Actions will automatically:
-   - Build the package
-   - Create a GitHub release with the changelog contents
-   - Attach the built package to the release
-   - Publish the package to GitHub Packages registry
+GitHub Actions will automatically:
+- Build the package
+- Create a GitHub release with the changelog contents
+- Attach the built package to the release
+- Publish the package to GitHub Packages registry
 
 ## ⚙️ Configuration
 

@@ -34,8 +34,7 @@ dev = [
 
 [project.scripts]
 speech-to-console = "speech_to_console.cli:app"
-changelog-gen = "scripts.generate_changelog:main"
-version-bump = "scripts.bump_version:main"
+release = "scripts.release:main"
 
 [tool.ruff]
 line-length = 88
